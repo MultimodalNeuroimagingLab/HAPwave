@@ -39,9 +39,9 @@ area_codes_l = {[11123 17],[18],[11108 11109 11110],[11106 11107]}; % left
 sub_hemi = {'r','r','r','l','r','l','l','r'};
 
 
-out = [];
+out = []; % this will be a area X area structure, with all subjects concatinates for each area
 
-subj_resp_total = zeros(7,1);               % stim-->measured pair
+subj_resp_total = zeros(7,1);               % stim-->measured pair for stats FDR correction
 
 t_win_norm = [0.015 0.500];
 
