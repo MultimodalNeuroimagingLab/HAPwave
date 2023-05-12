@@ -2,12 +2,14 @@ clearvars, clc, close all
 % startup 
 
 %% Load stats across subs
-% Dependencies: AGOV pcc_project repository: http://birrepos.mayo.edu/multimodal-neuroimaging-lab/pcc_project
-%               MNL ieeg basics repository
+% Dependencies: MNL ieeg basics repository
 % cd to HAPwave repository
+
 addpath(genpath(pwd))
-% addpath(genpath('/Users/M219978/Documents/git/mnl_ieegBasics'))
-% set local path to your BIDs directory:
+
+% set local path to your BIDS directory:
+myPath = setLocalDataPath(1);
+localDataPath = myPath.input;
 
 % load the meta data
 all_subjects = {'01','02','03','04','05','06','07','08'}; % 
@@ -21,45 +23,8 @@ for ss = 1:length(all_subjects)
     bids_task = 'ccep';
     bids_run = all_runs{ss};
 
-    % set filenames: mefd, events, channels and electrodes
-    events_tsv_name = fullfile(localDataPath,['sub-' bids_sub],['ses-' bids_ses],'ieeg',...
-        ['sub-' bids_sub '_ses-' bids_ses '_task-' bids_task '_run-' bids_run '_events.tsv']);
-    channels_tsv_name = fullfile(localDataPath,['sub-' bids_sub],['ses-' bids_ses],'ieeg',...
-        ['sub-' bids_sub '_ses-' bids_ses '_task-' bids_task '_run-' bids_run '_channels.tsv']);
-    electrodes_tsv_name = fullfile(localDataPath,['sub-' bids_sub],['ses-' bids_ses],'ieeg',...
-        ['sub-' bids_sub '_ses-' bids_ses '_electrodes.tsv']);
-
-    % load events, channels and electrodes
-    events_table = readtable(events_tsv_name,'FileType','text','Delimiter','\t','TreatAsEmpty',{'N/A','n/a'}); % events table
-    channels_table = readtable(channels_tsv_name,'FileType','text','Delimiter','\t','TreatAsEmpty',{'N/A','n/a'}); % channels table
-    electrodes_table = sortElectrodes(electrodes_tsv_name, channels_tsv_name, false); % electrodes table sorted according to channels
-   
-    % find good sEEG channels
-    good_channels = find(ismember(channels_table.type,{'ECOG','SEEG'}) & ismember(channels_table.status,'good'));
-
-    % load stats/average CCEPs from outputName
-    crpFile = fullfile(localDataPath,'derivatives','stats',['sub-' bids_sub],...
-        ['sub-' bids_sub '_ses-' bids_ses '_task-' bids_task '_run-' bids_run '_crp.mat']);
-    load(crpFile,'average_ccep','average_ccep_names','average_ccep_areas','tt','srate','crp_out','channel_names','channel_areas');
-    
-    all_out(ss).average_ccep = average_ccep;
-    all_out(ss).average_ccep_names = average_ccep_names;
-    all_out(ss).average_ccep_areas = average_ccep_areas;
-
-    all_out(ss).tt = tt;
-    all_out(ss).srate = srate;
-    all_out(ss).crp_out = crp_out;
-    
-    % label areas of stim and measured electrodes
-    all_out(ss).nr_channels = height(channels_table); % get number of channels
-    all_out(ss).channel_names = channels_table.name; % list of channel names
-    all_out(ss).channel_areas = channel_areas;
-
-    % find good sEEG channels
-    all_out(ss).good_channels = find(ismember(channels_table.type,{'ECOG','SEEG'}) & ismember(channels_table.status,'good'));
-    all_out(ss).bad_channels = find(~ismember(channels_table.type,{'ECOG','SEEG'}) | ~ismember(channels_table.status,'good'));
-
-    clear stim_area channel_area average_ccep average_ccep_names tt srate 
+    [events_table,channels_table,electrodes_table,sub_out] = pcc_loadAveragesStats(localDataPath,bids_sub,bids_ses,bids_task,bids_run);
+    all_out(ss) = sub_out;
 end
 
 
@@ -217,7 +182,6 @@ for ss = 8%:8
 end
 
 %% now show distribution plots
-addpath(genpath('/Users/M219978/Documents/git/measures-of-effect-size-toolbox'))
 
 % list all CRP amplitudes in one column
 % pick a variable from the output
