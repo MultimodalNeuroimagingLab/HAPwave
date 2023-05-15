@@ -8,14 +8,15 @@ clearvars, close all, clc
 addpath(genpath(pwd));
 
 % set local path to your BIDS directory:
-setLocalDataPath
+myPath = setLocalDataPath(1);
+localDataPath = myPath.input;
 
 % load the meta data
 all_subjects = {'01','02','03','04','05','06','07','08'};
 all_hemi = {'r','r','r','l','r','l','l','r'};
 all_runs = {'01','01','01','01','01','01','01','01'};
 
-for ss = 8%1:length(all_subjects)
+for ss = 1:length(all_subjects)
     bids_sub = all_subjects{ss};
     bids_ses = 'ieeg01';
     bids_task = 'ccep';
@@ -88,7 +89,18 @@ for ss = 8%1:length(all_subjects)
     ccep_stim_areas_limbic = ccep_stim_areas(sum(ccep_stim_areas,2)>0,:);
     ccep_stim_names_limbic = ccep_stim_names(sum(ccep_stim_areas,2)>0,:);
     events_table_clipped = bids_clipEvents(events_table_clipped,'electrical_stimulation_site', ccep_stim_names_limbic); % keep only events with stim current == 4.0 or 6.0 mA
- 
+
+    % remove events if less than 4 of the same type
+    remove_stim_pair = {};
+    [uni_stim_sets,bb,cc] = unique(events_table_clipped.electrical_stimulation_site);
+    for kk = 1:length(uni_stim_sets)
+        if length(find(ismember(events_table_clipped.electrical_stimulation_site,uni_stim_sets{kk})))<4
+            disp(['less then 4 events for sub ' int2str(ss) ' ' uni_stim_sets{kk}])
+            remove_stim_pair =[remove_stim_pair uni_stim_sets(kk)];
+        end
+    end
+    events_table_clipped(ismember(events_table_clipped.electrical_stimulation_site,remove_stim_pair),:) = [];
+
     % stuff
     baseline_t = [-0.5 -0.05]; 
     t_win_crp = [0.015 1];

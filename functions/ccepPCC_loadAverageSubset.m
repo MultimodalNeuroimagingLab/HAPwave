@@ -153,11 +153,11 @@ for kk = 1:max(stim_pair_nr) % condition number
         
         % run CRP for channels in the limbic network
         for ii = 1:size(channel_areas,1)
-            if channel_areas(ii)>1  && ismember(ii,good_channels_car) && size(data_epoch,2)>3% only limbic 
+            if channel_areas(ii)>1  && ismember(ii,good_channels_car) % && size(data_epoch,2)>3% only limbic 
                 crp_out(ii,kk).data = squeeze(data_epoch(ii,:,:));
                 crp_out(ii,kk).tt = tt;
                 V = squeeze(data_epoch(ii,:,tt>t_win_cod(1) & tt<t_win_cod(2)));
-                t_win = tt(tt>0.015 & tt<1);
+                t_win = tt(tt>t_win_cod(1) & tt<t_win_cod(2));
                 [crp_parms, crp_projs] = CRP_method(V',t_win);
                 crp_out(ii,kk).crp_parms = crp_parms;
                 crp_out(ii,kk).crp_projs = crp_projs;
