@@ -54,6 +54,7 @@ for ss = 1:nr_subs % subject loop
     all_out(ss).cod = NaN(size(all_out(ss).crp_out));
     all_out(ss).crp_p_adj = NaN(size(all_out(ss).crp_out));
     all_out(ss).h = NaN(size(all_out(ss).crp_out));
+    all_out(ss).avg_trace_tR = zeros(size(all_out(ss).average_ccep));
     
     % loop over measured sites
     for kk = 1:length(these_measured_sites)
@@ -64,6 +65,9 @@ for ss = 1:nr_subs % subject loop
                 all_out(ss).crp_p(these_measured_sites(kk), these_stim_sites(ll)) = all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_projs.p_value_tR;
                 all_out(ss).a_prime(these_measured_sites(kk), these_stim_sites(ll)) = mean(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.al_p); % mean alpha prime across trials;
                 all_out(ss).cod(these_measured_sites(kk), these_stim_sites(ll)) = median(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.cod); % median across trials
+                sig_timepoints = find(all_out(ss).tt>0.015 & all_out(ss).tt<=all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.tR);
+                all_out(ss).avg_trace_tR(these_measured_sites(kk), these_stim_sites(ll),sig_timepoints) = all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.C;
+
             else
                 all_out(ss).hasdata(these_measured_sites(kk), these_stim_sites(ll)) = 0;
             end
@@ -142,6 +146,7 @@ for measure_ind = 1:length(area_codes_r) % loop through the inds
                         % get responses
                         out(measure_ind,stim_ind).plot_responses_norm(resp_counter, :) = plot_responses_norm;
                         out(measure_ind,stim_ind).plot_responses(resp_counter, :) = plot_responses;
+                        out(measure_ind,stim_ind).C(resp_counter, :) = squeeze(all_out(ss).avg_trace_tR(these_measured_sites(kk), these_stim_sites(ll), :));
 
                         out(measure_ind,stim_ind).subj_ind(resp_counter, :) = ss;
 
@@ -200,3 +205,46 @@ end
 % xlim([-0.2 .6]), ylim([10 150]);
 % xlabel('Time (s)'), ylabel('Normalized Amplitude')
 
+%%
+%% plot C from crp, zero padded after response duration tR
+ 
+tt = all_out(1).tt;
+
+figure('Position',[0 0 1000 800]), hold on
+for measure_ind = 1:length(area_codes)
+    for stim_ind = 1:length(area_codes)
+        subplot(length(area_codes), length(area_codes), (measure_ind-1) * length(area_codes) + stim_ind),hold on
+
+        sign_resp = out(measure_ind,stim_ind).p<0.05; % adjusted for multiple comparisons
+%         sign_resp = out(measure_ind,stim_ind).cod>0.30; 
+
+        this_set = out(measure_ind,stim_ind).C(sign_resp==1,:)';        
+
+%         Plot all response, mean and confidence interval
+        plot(tt,this_set,'color',[.5 .5 .5 .2])                   % just plot all responses
+        plot(tt,mean(this_set,2), 'color','k', 'LineWidth',1)       % plot mean of all responses
+        plot(tt(tt>.015 & tt<1),zeros(size(tt(tt>.015 & tt<1))),'k:') % plot zero line
+        plotCurvConf(tt, this_set');                                % plots 95% Confidende interval in gray with 50% transparency
+
+%         % Plot significance along timepoints
+%         [h, p] = ttest(this_set');                                  % get ttest & p values
+%         hAdj = fdr_bh(p, 0.05, 'pdep');                              % adjust ttest with fdr for any dependency structure ('dep')
+%         [M,I] = max(hAdj);
+        % show standard deviation on top
+%         plot(tt(find(hAdj)), -0.065*hAdj(find(hAdj)), 'b.');
+%         ylabel(M)
+
+%        % plot first pc
+%         [u,s,v] = svd(this_set(tt>.015 & tt<1,:),'econ');
+%         plot(tt(tt>.015 & tt<1),u(:,2)) % PC1 seems to capture limbic-H-wave better, but not perfect
+
+
+        xlim([0 1]),ylim([-0.08 0.08])
+        title(['stim:' area_names{stim_ind} ' rec:' area_names{measure_ind} ])
+    end
+    xlim([0 1]),ylim([-0.08 0.08])
+end
+
+
+% xlim([-0.2 .6]), ylim([10 150]);
+% xlabel('Time (s)'), ylabel('Normalized Amplitude')
