@@ -1,4 +1,4 @@
-function [n1_peak_sample,n1_peak_amplitude,n1_peak_time] = ccep_detect_n1peak_ECoG(average_ccep,tt,params)
+function [n1_peak_sample,n1_peak_amplitude,n1_peak_time] = ccep_detect_n1peak_sEEG(average_ccep,tt,params)
 
 % Function for detecting the the N1 peaks of CCEPs
 
@@ -73,16 +73,16 @@ function [n1_peak_sample,n1_peak_amplitude,n1_peak_time] = ccep_detect_n1peak_EC
 
 amplitude_thresh = params.amplitude_thresh;
 n1_peak_range = params.n1_peak_range;
- 
-baseline_tt = tt>-.5 & tt<-.020;
+peakSign = params.peakSign; % 1 for positive -1 for negative
+baseline_tt = params.baseline_tt;%tt>-.5 & tt<-.020;
             
 % take area before the stimulation of the new signal and calculate its SD
 pre_stim_sd = std(average_ccep(baseline_tt));
 
 % if the pre_stim_sd is smaller that the minimally needed SD,
 % which is validated as 50 uV, use this the minSD as pre_stim_sd
-if pre_stim_sd < 50
-    pre_stim_sd = 50;
+if pre_stim_sd < params.amplitudeThresh
+    pre_stim_sd = params.amplitudeThresh;
 end
 
 % use peakfinder to find all positive and negative peaks and their
@@ -97,7 +97,7 @@ min_peak_tt = 0.013;
 
 % UPDATED: the range for finding peaks is set from 13ms:500ms
 % post-stimulation.
-[all_sampneg, all_amplneg] = ccep_peakfinder(average_ccep(find(tt>min_peak_tt,1):find(tt>0.5,1)),20,[],1);
+[all_sampneg, all_amplneg] = ccep_peakfinder(average_ccep(find(tt>min_peak_tt,1):find(tt>0.5,1)),20,[],peakSign);
 
 % If the first selected sample is a peak, this is not a real peak,
 % so delete
@@ -134,15 +134,22 @@ elseif isempty(temp_n1_peaks_samp)
     n1_peak_time = NaN;
 end
 
-% if N1 < 0, it is deleted
-if temp_n1_peaks_ampl < 0
-    n1_peak_sample = NaN;
-    n1_peak_amplitude = NaN;
-    n1_peak_time = NaN;
+if peakSign==1 % if N1 < 0, it is deleted
+    if temp_n1_peaks_ampl < 0
+        n1_peak_sample = NaN;
+        n1_peak_amplitude = NaN;
+        n1_peak_time = NaN;
+    end
+elseif peakSign==-1 % if N1 > 0, it is deleted
+    if temp_n1_peaks_ampl > 0
+        n1_peak_sample = NaN;
+        n1_peak_amplitude = NaN;
+        n1_peak_time = NaN;
+    end
 end
 
 % if the peak is not big enough to consider as a peak, assign NaN
-if abs(n1_peak_amplitude) < amplitude_thresh* abs(pre_stim_sd)
+if abs(n1_peak_amplitude) < amplitude_thresh * abs(pre_stim_sd)
     n1_peak_sample = NaN;
     n1_peak_amplitude = NaN;
     n1_peak_time = NaN;
