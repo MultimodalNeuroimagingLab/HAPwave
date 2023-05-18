@@ -1,6 +1,4 @@
 clearvars, clc, close all
-% startup
-
 addpath(genpath(pwd))
 
 % set local path to your BIDS directory:
@@ -81,7 +79,7 @@ for ss = 1:nr_subs % subject loop
 end
 
 %% Load stim and measure areas across subjects
-sub_color = {[0 0.4470 0.7410],[0.8500 0.3250 0.0980],[0.4660 0.6740 0.1880],[0.4940 0.1840 0.5560],[0.9290 0.6940 0.1250],[0.3010 0.7450 0.9330],[0.6350 0.0780 0.1840]};
+set_color = {[0 0.4470 0.7410],[0.8500 0.3250 0.0980],[0.4660 0.6740 0.1880],[0.4940 0.1840 0.5560],[0.9290 0.6940 0.1250],[0.3010 0.7450 0.9330],[0.6350 0.0780 0.1840]};
 % blue, orange, green, purple, mustard, celeste, wine
 
 
@@ -95,7 +93,6 @@ area_codes_l = {[11123 17],[18],[11108 11109 11110],[11106 11107]}; % left
 sub_hemi = {'r','r','r','l','r','l','l','r'};
 
 nr_subs = length(sub_hemi);
-
 
 out = []; % this will be a area X area structure, with all subjects concatinates for each area
 
@@ -205,8 +202,6 @@ for measure_ind = 1:length(area_codes_r) % loop through the inds
 end
 
 
-
-
 %% plot CCEPs with N1 in dots and std error 
  
 tt = all_out(1).tt;
@@ -221,7 +216,7 @@ for measure_ind = 1:length(area_codes)
         this_set = out(measure_ind,stim_ind).plot_responses_norm(sign_resp==1,:)';        
 
 %         Plot all response, mean and confidence interval
-        plot(tt,this_set,'color',[.5 .5 .5 .2])                   % just plot all responses
+%         plot(tt,this_set,'color',[.5 .5 .5 .2])                   % just plot all responses
         plot(tt,mean(this_set,2), 'color','k', 'LineWidth',1)       % plot mean of all responses
         plot(tt(tt>.015 & tt<1),zeros(size(tt(tt>.015 & tt<1))),'k:') % plot zero line
         plotCurvConf(tt, this_set');                                % plots 95% Confidende interval in gray with 50% transparency
@@ -237,20 +232,6 @@ for measure_ind = 1:length(area_codes)
             end
         end
               
-
-%         % Plot significance along timepoints
-%         [h, p] = ttest(this_set');                                  % get ttest & p values
-%         hAdj = fdr_bh(p, 0.05, 'pdep');                              % adjust ttest with fdr for any dependency structure ('dep')
-%         [M,I] = max(hAdj);
-        % show standard deviation on top
-%         plot(tt(find(hAdj)), -0.065*hAdj(find(hAdj)), 'b.');
-%         ylabel(M)
-
-%        % plot first pc
-%         [u,s,v] = svd(this_set(tt>.015 & tt<1,:),'econ');
-%         plot(tt(tt>.015 & tt<1),u(:,2)) % PC1 seems to capture limbic-H-wave better, but not perfect
-
-
         xlim([0 1]),ylim([-0.08 0.08])
         title(['stim:' area_names{stim_ind} ' rec:' area_names{measure_ind} ])
     end
@@ -262,7 +243,7 @@ end
 
 %% now get proportion of N1s of all CRPs
 
-figure('Position',[0 0 1000 800]), hold on
+figure('Position',[0 0 300 800]), hold on
 
 for measure_ind = 1:length(area_codes)
     for stim_ind = 1:length(area_codes)
@@ -275,16 +256,17 @@ for measure_ind = 1:length(area_codes)
         n1s = ~isnan(out(measure_ind,stim_ind).n1ampl); % found and N1 (pos or neg)
 
         bar(length(out(measure_ind,stim_ind).p),'FaceColor',[.9 .9 .9]) % plot bar with all responses?
-        txt = length(out(measure_ind,stim_ind).p);
-        text(.7,txt,{txt},'color',[.5 .5 .5],...
+        sum_cceps = length(out(measure_ind,stim_ind).p);
+        text(.7,sum_cceps,{sum_cceps},'color',[.5 .5 .5],...
             'HorizontalAlignment','center','VerticalAlignment','bottom') 
         bar(sum(sign_resp),'FaceColor',[0 0.4470 0.7410])         % plot bar with sig CRP
-        txt = sum(sign_resp);
-        text(1,txt,{txt},'color',[0 0.4470 0.7410],...
+        sum_CRPs = sum(sign_resp);
+        text(1,sum_CRPs,{sum_CRPs},'color',[0 0.4470 0.7410],...
             'HorizontalAlignment','center','VerticalAlignment','bottom')
         bar(sum(n1s),'FaceColor',[0.92 0.69 0.12])               % plot bar with N1s
-        txt = sum(n1s);
-        text(1,txt,{txt},'color',[0.92 0.69 0.12],...
+        sum_N1s = sum(n1s);
+        text(1,sum_N1s,{sum_N1s},'color',[0.92 0.69 0.12],...
             'HorizontalAlignment','left','VerticalAlignment','bottom')
+
     end
 end
