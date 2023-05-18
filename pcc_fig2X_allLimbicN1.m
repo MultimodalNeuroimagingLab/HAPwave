@@ -274,8 +274,17 @@ for measure_ind = 1:length(area_codes)
         % all N1s 
         n1s = ~isnan(out(measure_ind,stim_ind).n1ampl); % found and N1 (pos or neg)
 
-        bar(length(out(measure_ind,stim_ind).p))
-        bar(sum(sign_resp))
-        bar(sum(n1s))
+        bar(length(out(measure_ind,stim_ind).p),'FaceColor',[.9 .9 .9]) % plot bar with all responses?
+        txt = length(out(measure_ind,stim_ind).p);
+        text(.7,txt,{txt},'color',[.5 .5 .5],...
+            'HorizontalAlignment','center','VerticalAlignment','bottom') 
+        bar(sum(sign_resp),'FaceColor',[0 0.4470 0.7410])         % plot bar with sig CRP
+        txt = sum(sign_resp);
+        text(1,txt,{txt},'color',[0 0.4470 0.7410],...
+            'HorizontalAlignment','center','VerticalAlignment','bottom')
+        bar(sum(n1s),'FaceColor',[0.92 0.69 0.12])               % plot bar with N1s
+        txt = sum(n1s);
+        text(1,txt,{txt},'color',[0.92 0.69 0.12],...
+            'HorizontalAlignment','left','VerticalAlignment','bottom')
     end
 end
