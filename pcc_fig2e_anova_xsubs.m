@@ -27,10 +27,63 @@ for ss = 1:length(all_subjects)
     all_out(ss) = sub_out;
 end
 
+%% Correct P values for number of comparisons in each subject
 
+area_codes = {[12123 53 54 12108 12109 12110 12106 12107 11123 17 18 11108 11109 11110 11106 11107]}; % all areas
+
+nr_subs = length(all_subjects);
+
+out = []; % this will be a area X area structure, with all subjects concatinates for each area
+
+subj_resp_total = zeros(nr_subs,1);               % stim-->measured pair for stats FDR correction
+
+
+resp_counter = 0; % counting all responses across subjects for this connection
+
+for ss = 1:nr_subs % subject loop
+   
+    % Get sites that belong to the measurement ROI (rec_area)
+    these_measured_sites = find(ismember(all_out(ss).channel_areas,area_codes{1}));
+    
+    % Get sites that belong to the stimulated ROI (stim_area)
+    these_stim_sites = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{1}) | ...
+        ismember(all_out(ss).average_ccep_areas(:,2),area_codes{1}));
+    
+    % p-values for correction of multiple comparisons
+    all_out(ss).hasdata = NaN(size(all_out(ss).crp_out));
+    all_out(ss).crp_p = NaN(size(all_out(ss).crp_out));
+    all_out(ss).a_prime = NaN(size(all_out(ss).crp_out));
+    all_out(ss).cod = NaN(size(all_out(ss).crp_out));
+    all_out(ss).crp_p_adj = NaN(size(all_out(ss).crp_out));
+    all_out(ss).h = NaN(size(all_out(ss).crp_out));
+    all_out(ss).avg_trace_tR = zeros(size(all_out(ss).average_ccep));
+    
+    % loop over measured sites
+    for kk = 1:length(these_measured_sites)
+        % loop over the stimulated pairs
+        for ll = 1:length(these_stim_sites)
+            if ~isempty(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).data) % ~ same stim/recording site
+                all_out(ss).hasdata(these_measured_sites(kk), these_stim_sites(ll)) = 1;
+                all_out(ss).crp_p(these_measured_sites(kk), these_stim_sites(ll)) = all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_projs.p_value_tR;
+                all_out(ss).a_prime(these_measured_sites(kk), these_stim_sites(ll)) = mean(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.al_p); % mean alpha prime across trials;
+                all_out(ss).cod(these_measured_sites(kk), these_stim_sites(ll)) = median(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.cod); % median across trials
+                sig_timepoints = find(all_out(ss).tt>0.015 & all_out(ss).tt<=all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.tR);
+                all_out(ss).avg_trace_tR(these_measured_sites(kk), these_stim_sites(ll),sig_timepoints) = all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.C;
+
+            else
+                all_out(ss).hasdata(these_measured_sites(kk), these_stim_sites(ll)) = 0;
+            end
+        end
+    end
+    pvals = all_out(ss).crp_p(all_out(ss).hasdata==1);
+    qq = 0.05;
+    [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'pdep','no');
+    all_out(ss).crp_p_adj(all_out(ss).hasdata==1) = adj_p;
+    all_out(ss).h(all_out(ss).hasdata==1) = h;
+end
 
 %% Load stim and measure areas across subjects
-sub_color = {[0 0.4470 0.7410],[0.8500 0.3250 0.0980],[0.4660 0.6740 0.1880],[0.4940 0.1840 0.5560],[0.9290 0.6940 0.1250],[0.3010 0.7450 0.9330],[0.6350 0.0780 0.1840]};
+set_color = {[0 0.4470 0.7410],[0.8500 0.3250 0.0980],[0.4660 0.6740 0.1880],[0.4940 0.1840 0.5560],[0.9290 0.6940 0.1250],[0.3010 0.7450 0.9330],[0.6350 0.0780 0.1840]};
 % blue, orange, green, purple, mustard, celeste, wine
 
 area_names = {'Hipp','Amyg','PCC','ACC'};   
@@ -39,203 +92,158 @@ area_codes_l = {[11123 17],[18],[11108 11109 11110],[11106 11107]}; % left
 
 sub_hemi = {'r','r','r','l','r','l','l','r'};
 
-%
-crp_var = 1; %1 for alpha prime, 4 for COD
+nr_subs = length(sub_hemi);
 
+out = []; % this will be a area X area structure, with all subjects concatinates for each area
 
-for ss = 8%:8
-   
+subj_resp_total = zeros(nr_subs,1);               % stim-->measured pair for stats FDR correction
 
-    if isequal(sub_hemi{ss},'l')
-        area_codes = area_codes_l;
-    elseif isequal(sub_hemi{ss},'r')
-        area_codes = area_codes_r;
-    end
+t_win_norm = [0.015 0.500]; % window for vector length normalization and plotting across subjects
 
-    figure
-    
-    pcc_els = find(ismember(all_out(ss).channel_areas,area_codes{3}));
-    pcc_els = setdiff(pcc_els,all_out(ss).bad_channels); % only good channels
-    
-    acc_els = find(ismember(all_out(ss).channel_areas,area_codes{4}));
-    acc_els = setdiff(acc_els,all_out(ss).bad_channels); % only good channels
-    
-    resp_ampl_pcc = NaN(length(all_out(ss).average_ccep_names), length(pcc_els), 4);
-    resp_ampl_acc = NaN(length(all_out(ss).average_ccep_names), length(acc_els), 4);
-    
-    for kk = 1: length(all_out(ss).average_ccep_names) 
-    
-        if ~isempty(all_out(ss).crp_out(pcc_els(1),kk).crp_parms) % there are sufficient trials
-    
-            if ismember(all_out(ss).average_ccep_areas(kk,1),area_codes{1}) || ...
-                ismember(all_out(ss).average_ccep_areas(kk,2),area_codes{1})% hippocampal stim
-        
-                % get response info from ACC and PCC
-                for ii = 1:length(pcc_els)
-                    resp_ampl_pcc(kk,ii,1) = mean(all_out(ss).crp_out(pcc_els(ii),kk).crp_parms.al_p); % mean across trials
-                    resp_ampl_pcc(kk,ii,2) = mean(all_out(ss).crp_out(pcc_els(ii),kk).crp_parms.Vsnr); % mean across trials | S1 mean 0.0765
-                    resp_ampl_pcc(kk,ii,3) = mean(all_out(ss).crp_out(pcc_els(ii),kk).crp_parms.expl_var); % mean across trials
-                    resp_ampl_pcc(kk,ii,4) = mean(all_out(ss).crp_out(pcc_els(ii),kk).crp_parms.cod); % mean across trials
-                    
-                    subplot(2,3,1), hold on
-    %                 plot(all_out(ss).crp_out(pcc_els(ii),kk).crp_parms.parms_times, all_out(ss).crp_out(pcc_els(ii),kk).crp_parms.C,'b')
-    %                 plot(all_out(ss).crp_out(pcc_els(ii),kk).crp_parms.parms_times, mean(all_out(ss).crp_out(pcc_els(ii),kk).crp_parms.V_tR,2),'b')
-                    plot(all_out(ss).tt, squeeze(all_out(ss).average_ccep(pcc_els(ii),kk,:)),'b')
-    
-                    xlim([-.5 1]), title(['S' int2str(ss) ' HP -> PCC'])
-                    ylim([-200 600])
-                end
+for measure_ind = 1:length(area_names) % loop through the inds 
+    for stim_ind = 1:length(area_names)
 
-                for ii = 1:length(acc_els)
-                    resp_ampl_acc(kk,ii,1) = mean(all_out(ss).crp_out(acc_els(ii),kk).crp_parms.al_p); % mean across trials
-                    resp_ampl_acc(kk,ii,2) = mean(all_out(ss).crp_out(acc_els(ii),kk).crp_parms.Vsnr); % mean across trials
-                    resp_ampl_acc(kk,ii,3) = mean(all_out(ss).crp_out(acc_els(ii),kk).crp_parms.expl_var); % mean across trials
-                    resp_ampl_acc(kk,ii,4) = mean(all_out(ss).crp_out(acc_els(ii),kk).crp_parms.cod); % mean across trials
-        
-%                     if mean(all_out(ss).crp_out(acc_els(ii),kk).crp_parms.cod) > 1
-%                         ss
-%                         all_out(ss).channel_names{acc_els(ii)}
-%                         all_out(ss).average_ccep_names{kk}
-%                     end
+        resp_counter = 0; % counting all responses across subjects for this connection
 
-
-                    subplot(2,3,2), hold on
-    %                 plot(all_out(ss).crp_out(acc_els(ii),kk).crp_parms.parms_times, all_out(ss).crp_out(acc_els(ii),kk).crp_parms.C,'r')
-    %                 plot(all_out(ss).crp_out(acc_els(ii),kk).crp_parms.parms_times, mean(all_out(ss).crp_out(acc_els(ii),kk).crp_parms.V_tR,2),'r')
-                    plot(all_out(ss).tt, squeeze(all_out(ss).average_ccep(acc_els(ii),kk,:)),'r')
-                    
-                    xlim([-.5 1]), title('HP -> ACC')
-                    ylim([-200 600])
-                end
-
-        
-            elseif ismember(all_out(ss).average_ccep_areas(kk,1),area_codes{2}) || ...
-                ismember(all_out(ss).average_ccep_areas(kk,2),area_codes{2})% amygdala stim
-        
-                % get response info from ACC and PCC
-                for ii = 1:length(pcc_els)
-                    resp_ampl_pcc(kk,ii,1) = mean(all_out(ss).crp_out(pcc_els(ii),kk).crp_parms.al_p); % mean across trials
-                    resp_ampl_pcc(kk,ii,2) = mean(all_out(ss).crp_out(pcc_els(ii),kk).crp_parms.Vsnr); % mean across trials
-                    resp_ampl_pcc(kk,ii,3) = mean(all_out(ss).crp_out(pcc_els(ii),kk).crp_parms.expl_var); % mean across trials
-                    resp_ampl_pcc(kk,ii,4) = mean(all_out(ss).crp_out(pcc_els(ii),kk).crp_parms.cod); % mean across trials
-        
-                    subplot(2,3,4), hold on
-    %                 plot(all_out(ss).crp_out(pcc_els(ii),kk).crp_parms.parms_times, all_out(ss).crp_out(pcc_els(ii),kk).crp_parms.C,'b')
-    %                 plot(all_out(ss).crp_out(pcc_els(ii),kk).crp_parms.parms_times, mean(all_out(ss).crp_out(pcc_els(ii),kk).crp_parms.V_tR,2),'b')
-                    plot(all_out(ss).tt, squeeze(all_out(ss).average_ccep(pcc_els(ii),kk,:)),'b')
-                    
-                    xlim([-.5 1]), title('AMYG -> PCC')
-                    ylim([-200 600])
-        
-                end
-
-                for ii = 1:length(acc_els)
-                    resp_ampl_acc(kk,ii,1) = mean(all_out(ss).crp_out(acc_els(ii),kk).crp_parms.al_p); % mean across trials
-                    resp_ampl_acc(kk,ii,2) = mean(all_out(ss).crp_out(acc_els(ii),kk).crp_parms.Vsnr); % mean across trials
-                    resp_ampl_acc(kk,ii,3) = mean(all_out(ss).crp_out(acc_els(ii),kk).crp_parms.expl_var); % mean across trials
-                    resp_ampl_acc(kk,ii,4) = mean(all_out(ss).crp_out(acc_els(ii),kk).crp_parms.cod); % mean across trials
-
-                    subplot(2,3,5), hold on
-    %                 plot(all_out(ss).crp_out(acc_els(ii),kk).crp_parms.parms_times, all_out(ss).crp_out(acc_els(ii),kk).crp_parms.C,'r')
-    %                 plot(all_out(ss).crp_out(acc_els(ii),kk).crp_parms.parms_times, mean(all_out(ss).crp_out(acc_els(ii),kk).crp_parms.V_tR,2),'r')
-                    plot(all_out(ss).tt, squeeze(all_out(ss).average_ccep(acc_els(ii),kk,:)),'r')
-                    
-                    xlim([-.5 1]), title('AMYG -> ACC')
-                    ylim([-200 600])
-        
-                end
-        
+        for ss = 1:nr_subs % subject loop
+            if isequal(sub_hemi{ss},'l')
+                area_codes = area_codes_l;
+            elseif isequal(sub_hemi{ss},'r')
+                area_codes = area_codes_r;
             end
-        end
-    end
-    
-    % find all hipp sites and compare response amplitude in PCC and ACC
-    hc_stims = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{1}) | ...
-            ismember(all_out(ss).average_ccep_areas(:,2),area_codes{1})); % hippocampal stim
-    amg_stims = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{2}) | ...
-            ismember(all_out(ss).average_ccep_areas(:,2),area_codes{2})); % amygdala stim
-           
-    disp('CRP parameters');
-    subplot(2,3,3), hold on % hc stim
-    plot(1, nanmean( resp_ampl_pcc(hc_stims,:,crp_var), 2), '*'),  % average pcc response to hipp 
-    plot(2, nanmean( resp_ampl_acc(hc_stims,:,crp_var), 2), '*') % average acc response to hipp
-    xlim([0 3])
-    % display crp_var average
-    title(['HC stim'])
-    pcc_mean = nanmean(nanmean( resp_ampl_pcc(hc_stims,:,crp_var), 2))
-    text(0.5,min(nanmean( resp_ampl_pcc(hc_stims,:,crp_var), 2)),{pcc_mean},'Rotation',90);%,'VerticalAlignment','baseline');
-    acc_mean = nanmean(nanmean( resp_ampl_acc(hc_stims,:,crp_var), 2))
-    text(1.5,min(nanmean( resp_ampl_acc(hc_stims,:,crp_var), 2)),{acc_mean},'Rotation',90);%,'VerticalAlignment','baseline');
 
+            % Get sites that belong to the measurement ROI (rec_area)
+            these_measured_sites = find(ismember(all_out(ss).channel_areas,area_codes{measure_ind}));
+            
+            % Get sites that belong to the stimulated ROI (stim_area)
+            these_stim_sites = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{stim_ind}) | ...
+                ismember(all_out(ss).average_ccep_areas(:,2),area_codes{stim_ind}));
+            
+            % loop over measured sites
+            for kk = 1:length(these_measured_sites)
+                % loop over the stimulated pairs
+                for ll = 1:length(these_stim_sites)
+                    if ~isempty(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).data) % ~ same stim/recording site
+                        
+                        % this is a pair, counting for multiple comparison
+                        % correction per subject
+                        subj_resp_total(ss) = subj_resp_total(ss) + 1; % set counter
+                        
+                        % first raw responses
+                        plot_responses = squeeze(all_out(ss).average_ccep(these_measured_sites(kk), these_stim_sites(ll), :));
+                        tt = all_out(ss).tt;
 
-    subplot(2,3,6), hold on % amg stim
-    plot(1, nanmean( resp_ampl_pcc(amg_stims,:,crp_var), 2), '*') % average pcc response to amyg
-    plot(2, nanmean( resp_ampl_acc(amg_stims,:,crp_var), 2), '*') % average acc response to amyg
-    xlim([0 3])
-    % add & display crp_var average
-    title(['Amg stim'])
-    pcc_mean = nanmean(nanmean( resp_ampl_pcc(amg_stims,:,crp_var), 2))
-    text(0.5,min(nanmean( resp_ampl_pcc(amg_stims,:,crp_var), 2)),{pcc_mean},'Rotation',90);%,'VerticalAlignment','baseline');
-    acc_mean = nanmean(nanmean( resp_ampl_acc(amg_stims,:,crp_var), 2))
-    text(1.5,min(nanmean( resp_ampl_acc(amg_stims,:,crp_var), 2)),{acc_mean},'Rotation',90);%,'VerticalAlignment','baseline');
+                        % save outputs
+                        resp_counter = resp_counter + 1;
 
+                        % get CCEP responses for plotting
+                        % Scaling to unit length (Euclidean lenght): https://en.wikipedia.org/wiki/Feature_scaling
+                        % unit length taken in same window as stats
+                        response_vector_length = sum(plot_responses(all_out(ss).tt > t_win_norm(1) &  all_out(ss).tt < t_win_norm(2)) .^ 2) .^ .5;
+                        plot_responses_norm = plot_responses ./ (response_vector_length*ones(size(plot_responses))); % normalize (L2 norm) each trial
+                        out(measure_ind,stim_ind).plot_responses_norm(resp_counter, :) = plot_responses_norm;
+                        
+                        % store subject index
+                        out(measure_ind,stim_ind).subj_ind(resp_counter, :) = ss;
+                        
+                        % save CRP stuff for linear mixed-effects model
+                        out(measure_ind,stim_ind).p(resp_counter, :) = all_out(ss).crp_p_adj(these_measured_sites(kk), these_stim_sites(ll));
+                        out(measure_ind,stim_ind).cod(resp_counter, :) = all_out(ss).cod(these_measured_sites(kk), these_stim_sites(ll)); 
+                        out(measure_ind,stim_ind).a_prime(resp_counter, :) = all_out(ss).a_prime(these_measured_sites(kk), these_stim_sites(ll)); 
+                    end
+                end % done looping through stim pairs
+            end  % done looping through measured electrode
+
+        end % done subject loop
+    end 
 end
 
-%% now show distribution plots
+%% General linear fixed effects model
 
-% list all CRP amplitudes in one column
-% pick a variable from the output
-crp_var = 1; %1 for alpha prime, 4 for COD
+% area_names = {'Hipp','Amyg','PCC','ACC'};   
+% out(measure_ind,stim_ind)
 
-% 1,1 list all PCC measured HC stim
-pcc_hc_amp = resp_ampl_pcc(hc_stims,:,crp_var);
-% generate two groups for this: one for stim, one for measured
-pcc_hc_stimgroup = ones(size(pcc_hc_amp)); % hc stim gets code 1
-pcc_hc_measgroup = 3*ones(size(pcc_hc_amp)); % pcc measure gets code 3
+pcc_hc_amp = out(3,1).cod;
+pcc_hc_stimgroup = cell(size(pcc_hc_amp)); 
+pcc_hc_measgroup = cell(size(pcc_hc_amp)); 
+[pcc_hc_stimgroup{:}] = deal('HC');
+[pcc_hc_measgroup{:}] = deal('PCC');
+sub_ind1 = out(3,1).subj_ind;
 
-% 1,2 list all ACC measured HC stim
-acc_hc_amp = resp_ampl_acc(hc_stims,:,crp_var);
-% generate two groups for this: one for stim, one for measured
-acc_hc_stimgroup = ones(size(acc_hc_amp)); % hc stim gets code 1
-acc_hc_measgroup = 4*ones(size(acc_hc_amp)); % acc measure gets code 4
+acc_hc_amp = out(4,1).cod;
+acc_hc_stimgroup = cell(size(acc_hc_amp)); % hc stim gets code 1
+acc_hc_measgroup = cell(size(acc_hc_amp)); % acc measure gets code 4
+[acc_hc_stimgroup{:}] = deal('HC');
+[acc_hc_measgroup{:}] = deal('ACC');
+sub_ind2 = out(4,1).subj_ind;
 
-% 2,1 list all PCC measured AMG stim
-pcc_amg_amp = resp_ampl_pcc(amg_stims,:,crp_var);
-% generate two groups for this: one for stim, one for measured
-pcc_amg_stimgroup = 2*ones(size(pcc_amg_amp)); % amg stim gets code 2
-pcc_amg_measgroup = 3*ones(size(pcc_amg_amp)); % pcc measure gets code 3
+pcc_amg_amp = out(3,2).cod;
+pcc_amg_stimgroup = cell(size(pcc_amg_amp)); % amg stim gets code 2
+pcc_amg_measgroup = cell(size(pcc_amg_amp)); % pcc measure gets code 3
+[pcc_amg_stimgroup{:}] = deal('AMG');
+[pcc_amg_measgroup{:}] = deal('PCC');
+sub_ind3 = out(3,2).subj_ind;
 
-% 2,2 list all ACC measured AMG stim
-acc_amg_amp = resp_ampl_acc(amg_stims,:,crp_var);
-% generate two groups for this: one for stim, one for measured
-acc_amg_stimgroup = 2*ones(size(acc_amg_amp)); % amg stim gets code 2
-acc_amg_measgroup = 4*ones(size(acc_amg_amp)); % acc measure gets code 4
+acc_amg_amp = out(4,2).cod;
+acc_amg_stimgroup = cell(size(acc_amg_amp)); % amg stim gets code 2
+acc_amg_measgroup = cell(size(acc_amg_amp)); % acc measure gets code 4
+[acc_amg_stimgroup{:}] = deal('AMG');
+[acc_amg_measgroup{:}] = deal('ACC');
+sub_ind4 = out(4,2).subj_ind;
 
-X = [pcc_hc_amp(:); acc_hc_amp(:); pcc_amg_amp(:); acc_amg_amp(:)];
+sub_ind = [sub_ind1; sub_ind2; sub_ind3; sub_ind4];
+y = [pcc_hc_amp(:); acc_hc_amp(:); pcc_amg_amp(:); acc_amg_amp(:)];
+stim_site = [pcc_hc_stimgroup(:); acc_hc_stimgroup(:); pcc_amg_stimgroup(:); acc_amg_stimgroup(:)]; % stim group
+measure_site = [pcc_hc_measgroup(:); acc_hc_measgroup(:); pcc_amg_measgroup(:); acc_amg_measgroup(:)]; % measurement group
 
-group1 = [pcc_hc_stimgroup(:); acc_hc_stimgroup(:); pcc_amg_stimgroup(:); acc_amg_stimgroup(:)]; % stim group
-group2 = [pcc_hc_measgroup(:); acc_hc_measgroup(:); pcc_amg_measgroup(:); acc_amg_measgroup(:)]; % measurement group
+tbl = table(y,categorical(stim_site),categorical(measure_site),categorical(sub_ind),...
+    'VariableNames',{'ccep_val','stim_site','measure_site','sub_ind'});
 
-% to plot
-% mesdplot(X,groupIx,nSample,factor,isDep,fName,contrast)
-[stats,sumTable] = mes2way(X,[group1 group2],{'omega2','eta2'},'doDataPlot',true);%,'cWeight',[1 -1;-1 1]);
+lme = fitlme(tbl,'ccep_val ~ 1 + stim_site*measure_site + (1|sub_ind)') % with interaction
 
-plot_groups = zeros(size(group1));
-plot_groups(group1==1 & group2==3) = 1;
-plot_groups(group1==2 & group2==3) = 2;
-plot_groups(group1==1 & group2==4) = 3;
-plot_groups(group1==2 & group2==4) = 4;
+% now test only for PCC
+sub_ind = [sub_ind1; sub_ind3];
+y = [pcc_hc_amp(:); pcc_amg_amp(:)];
+stim_site = [pcc_hc_stimgroup(:); pcc_amg_stimgroup(:)]; % stim group
+tbl = table(y,categorical(stim_site),categorical(sub_ind),...
+    'VariableNames',{'ccep_val','stim_site','sub_ind'});
+lme = fitlme(tbl,'ccep_val ~ 1 + stim_site + (1|sub_ind)') % with interaction
 
-X = [X; NaN; NaN; NaN; NaN];
-plot_groups = [plot_groups; 1; 2; 3; 4];
+% now test only for ACC
+sub_ind = [sub_ind2; sub_ind4];
+y = [acc_hc_amp(:); acc_amg_amp(:)];
+stim_site = [acc_hc_stimgroup(:); acc_amg_stimgroup(:)]; % stim group
+tbl = table(y,categorical(stim_site),categorical(sub_ind),...
+    'VariableNames',{'ccep_val','stim_site','sub_ind'});
+lme = fitlme(tbl,'ccep_val ~ 1 + stim_site + (1|sub_ind)') % with interaction
+
+%% Distribution plot
+
+sub_ind = [sub_ind1; sub_ind2; sub_ind3; sub_ind4];
+y = [pcc_hc_amp(:); acc_hc_amp(:); pcc_amg_amp(:); acc_amg_amp(:)];
+stim_site = [pcc_hc_stimgroup(:); acc_hc_stimgroup(:); pcc_amg_stimgroup(:); acc_amg_stimgroup(:)]; % stim group
+measure_site = [pcc_hc_measgroup(:); acc_hc_measgroup(:); pcc_amg_measgroup(:); acc_amg_measgroup(:)]; % measurement group
+
+plot_groups = zeros(size(stim_site));
+plot_groups(ismember(stim_site,'HC') & ismember(measure_site,'PCC')) = 1;
+plot_groups(ismember(stim_site,'AMG') & ismember(measure_site,'PCC')) = 2;
+plot_groups(ismember(stim_site,'HC') & ismember(measure_site,'ACC')) = 3;
+plot_groups(ismember(stim_site,'AMG') & ismember(measure_site,'ACC')) = 4;
+
+% X = [X; NaN; NaN; NaN; NaN];
+% plot_groups = [plot_groups; 1; 2; 3; 4];
 
 % figure,hold on
 figure('Position',[0 0 250 400]), hold on;
-distributionPlot(X,'groups',plot_groups,'addSpread',1,'showMM',5);%
-str = sumTable{5,6};
-text(2.5,max(X),{str},'HorizontalAlignment','center','VerticalAlignment','cap');%,'Rotation',90,'VerticalAlignment','baseline');
+distributionPlot(y,'groups',plot_groups,'color',[.7 .7 1],'distWidth',1,'showMM',0);%
 
-if sumTable{5,6} < 0.05 % if p <-0.05
-    plot(2.5,max(X),'r*', 'MarkerSize',20)
-end
-xlim([0 5])
+% plotSpread
+plotSpread(y, 'distributionIdx', plot_groups, 'xValues', 1:4, 'spreadWidth', .5,...
+    'distributionColors', [0.5, 0.5, 0.5]);
+
+plot([1:4],[median(y(plot_groups==1)) median(y(plot_groups==2)) median(y(plot_groups==3)) median(y(plot_groups==4))],'k.','MarkerSize',30);
+
+xlim([0 5]),ylim([-0.6 1.4]),ylabel('Explained Variance (R^2)')
+set(gca,'YTick',[0:.2:1],'XTick',[1:4],'XTickLabel',{'H-PCC','A-PCC','H-ACC','A-ACC'})
+
+
