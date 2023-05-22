@@ -82,10 +82,7 @@ end
 set_color = {[0 0.4470 0.7410],[0.8500 0.3250 0.0980],[0.4660 0.6740 0.1880],[0.4940 0.1840 0.5560],[0.9290 0.6940 0.1250],[0.3010 0.7450 0.9330],[0.6350 0.0780 0.1840]};
 % blue, orange, green, purple, mustard, celeste, wine
 
-
 % changes to the following:
-% area_names = {'Hipp','Amyg','PCC','ACC'};   % Left ANT out
-% area_codes = {[1 8],[2],[5 6 7],[3 4]};
 area_names = {'Hipp','Amyg','PCC','ACC'};   
 area_codes_r = {[12123 53],[54],[12108 12109 12110],[12106 12107]}; % right
 area_codes_l = {[11123 17],[18],[11108 11109 11110],[11106 11107]}; % left
@@ -224,11 +221,11 @@ for measure_ind = 1:length(area_codes)
         % if a significant N1, plot it
         for kk = 1:length(sign_resp) % adjusted for multiple comparisons
             if sign_resp(kk)==1 % significant CRP
-                if ~isnan(out(measure_ind,stim_ind).n1ampl(kk)) % found and N1 (pos or neg)
-                    plot(tt(out(measure_ind,stim_ind).n1sample(kk)),... 
-                        out(measure_ind,stim_ind).plot_responses_norm(kk,out(measure_ind,stim_ind).n1sample(kk)),...
-                        'r.')
-                end
+%                 if ~isnan(out(measure_ind,stim_ind).n1ampl(kk)) % found and N1 (pos or neg)
+%                     plot(tt(out(measure_ind,stim_ind).n1sample(kk)),... 
+%                         out(measure_ind,stim_ind).plot_responses_norm(kk,out(measure_ind,stim_ind).n1sample(kk)),...
+%                         'r.')
+%                 end
             end
         end
               

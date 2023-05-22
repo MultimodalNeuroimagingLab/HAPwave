@@ -168,18 +168,17 @@ end
  
 % area_names = {'Hipp','Amyg','PCC','ACC'};   
 measure_ind = 3;
-stim_ind = 1;
+stim_ind = 2;
 
 tt = all_out(1).tt;
 
-sub_color = {[0 0.4470 0.7410],[0.8500 0.3250 0.0980],[0.4660 0.6740 0.1880],[0.4940 0.1840 0.5560],[0.9290 0.6940 0.1250],[0.3010 0.7450 0.9330],[0.6350 0.0780 0.1840]};
-sub_axis = {[-250 650],[-100 300],[-350 300],[-300 2100],[-200 350],[-500 1000],[-300 300]};% blue, orange, green, purple, mustard, celeste, wine
+sub_color = {[0 0.4470 0.7410],[0.8500 0.3250 0.0980],[0.4660 0.6740 0.1880],[0.4940 0.1840 0.5560],[0.9290 0.6940 0.1250],[0.3010 0.7450 0.9330],[0.6350 0.0780 0.1840],[0.6350 0.0780 0.1840]};
+sub_axis = {[-250 700],[-110 300],[-350 300],[-750 2100],[-200 350],[-500 1000],[-300 350],[-250 750]};% blue, orange, green, purple, mustard, celeste, wine
 
 figure('Position',[0 0 400 800]), hold on
 
-
-for ss = 1:7 
-    subplot(7,1,(ss)), hold on
+for ss = 1:8 
+    subplot(8,1,(ss)), hold on
 
     % only this subject
     ss_resps = out(measure_ind,stim_ind).subj_ind==ss;
@@ -204,9 +203,9 @@ for ss = 1:7
         this_set(tt > -0.010 & tt < 0.010,:) = NaN;
         plot(tt, ss + this_set, 'Color',sub_color{ss}, 'LineWidth', .5);
         xlim([-0.2 .6]), ylim([sub_axis{ss}]);
-        xlabel('Time (s)'), ylabel('Voltage (uV)')
-
+        ylabel('Voltage (uV)')
+        title([area_names{stim_ind} ' -> ' area_names{measure_ind}])
     end
-
+   
 end
-
+ xlabel('Time (s)')
