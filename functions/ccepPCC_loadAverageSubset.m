@@ -26,8 +26,14 @@ end
 
 if isempty(varargin)
     return_single_trials = 0;
-else
-    return_single_trials = varargin{1};
+else 
+    if length(varargin)>=1
+        if ~isempty(varargin{1})
+            return_single_trials = varargin{1};
+        else
+            return_single_trials = 0;
+        end
+    end
 end
 
 % load metadata
