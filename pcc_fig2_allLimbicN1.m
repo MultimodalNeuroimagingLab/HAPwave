@@ -24,8 +24,7 @@ end
 
 %% Correct P values for number of comparisons in each subject
 
-% add thalamic sites to this list
-area_codes = {[12123 53 54 12108 12109 12110 12106 12107 11123 17 18 11108 11109 11110 11106 11107]}; % all areas
+area_codes = {[12123 53 54 12108 12109 12110 12106 12107 59 11123 17 18 11108 11109 11110 11106 11107 10]}; % all areas
 
 nr_subs = length(all_subjects);
 
