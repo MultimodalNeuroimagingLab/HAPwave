@@ -1,5 +1,5 @@
-function [average_ccep,average_ccep_names,tt,srate,crp_out] = ...
-    ccepPCC_loadAverageSubset(fileName,events_table,good_channels, channel_areas ,baseline_t,t_win_cod,use_CAR)
+function [average_ccep,average_ccep_names,tt,srate,crp_out,single_trials] = ...
+    ccepPCC_loadAverageSubset(fileName,events_table,good_channels, channel_areas ,baseline_t,t_win_cod,use_CAR,varargin)
 %
 % input:
 %   fileName
@@ -22,6 +22,12 @@ function [average_ccep,average_ccep_names,tt,srate,crp_out] = ...
 
 if isempty(use_CAR)
     use_CAR = 1; % default is to do CAR
+end
+
+if isempty(varargin)
+    return_single_trials = 0;
+else
+    return_single_trials = varargin{1};
 end
 
 % load metadata
@@ -175,6 +181,12 @@ for kk = 1:max(stim_pair_nr) % condition number
     else
         % save name of the current epoch
         average_ccep_names{kk} = stim_pair_name{find(stim_pair_nr==kk,1)};
+    end
+    if return_single_trials==1 && max(stim_pair_nr)==1
+        single_trials = data_epoch;
+    elseif return_single_trials==1 && max(stim_pair_nr)>1
+        disp('can not return single trials, only works for 1 stim pair')
+        single_trials = [];
     end
     clear these_epochs_data data_epoch ll_start ll_end
 end
