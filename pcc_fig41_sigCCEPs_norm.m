@@ -163,8 +163,9 @@ end
 %% plot CCEPs with N1 in dots and std error 
  
 % area_names = {'Hipp','Amyg','PCC','ACC'};   
-measure_ind = 1;
-stim_ind = 2;
+stim_ind = 1;
+measure_ind = 3;
+
 
 tt = all_out(1).tt;
 
@@ -174,7 +175,7 @@ sub_axis = {[-250 700],[-110 300],[-350 300],[-750 2100],[-200 350],[-500 1000],
 figure('Position',[0 0 400 800]), hold on
 
 for ss = 1:8 
-    subplot(8,1,(ss)), hold on
+%     subplot(8,1,(ss)), hold on
 
     % only this subject
     ss_resps = out(measure_ind,stim_ind).subj_ind==ss;
@@ -182,24 +183,24 @@ for ss = 1:8
     % only significant responses (FDR corrected)
     sign_resp = out(measure_ind,stim_ind).p<0.05; % adjusted for multiple comparisons
        
-    this_set = out(measure_ind,stim_ind).plot_responses(sign_resp & ss_resps,:)';        
+    this_set = out(measure_ind,stim_ind).plot_responses_norm(sign_resp & ss_resps,:)';        
 
     % Look for coverage in the stimulated and/or measurement ROI
     if isempty(this_set)
         % no coverage sites of interest 
         % draw brown dotted line             / Meaning: No electrodes implanted in ROI for this sub
-        yline(ss,':', 'Color', [.9 .3 .3],'LineWidth', .5);
+        yline(ss*.2,':', 'Color', [.9 .3 .3],'LineWidth', .5);
         
     else
         % Coverage in both measurement and stimulated ROI
         % black line if no sign responses     / Meaning: CCEPs were not significant under SEPS of interest ):
-        plot([-.2 .8], [ss, ss], 'Color', 'k', 'LineWidth', .7);
+        plot([-.2 .8], [ss*.2, ss*.2], 'Color', 'k', 'LineWidth', .7);
 
 
         this_set(tt > -0.010 & tt < 0.010,:) = NaN;
-        plot(tt, ss + this_set, 'Color',sub_color{ss}, 'LineWidth', .5);
-        xlim([-0.2 .6]), ylim([sub_axis{ss}]);
-        ylabel('Voltage (uV)')
+        plot(tt, ss*.2 + this_set, 'Color',sub_color{ss}, 'LineWidth', .5);
+        xlim([-0.2 .6]), ylim([0 1.7]);
+        ylabel('Voltage (L2-normalized)')
         title([area_names{stim_ind} ' -> ' area_names{measure_ind}])
     end
    

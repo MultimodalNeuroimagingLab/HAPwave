@@ -163,7 +163,7 @@ end
 %% plot CCEPs with N1 in dots and std error 
  
 % area_names = {'Hipp','Amyg','PCC','ACC'};   
-measure_ind = 1;
+measure_ind = 4;
 stim_ind = 2;
 
 tt = all_out(1).tt;
