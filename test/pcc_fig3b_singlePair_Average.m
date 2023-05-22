@@ -88,9 +88,9 @@ ccep_stim_names_limbic = ccep_stim_names(sum(ccep_stim_areas,2)>0,:);
 events_table_clipped = bids_clipEvents(events_table_clipped,'electrical_stimulation_site', ccep_stim_names_limbic); % keep only events with stim current == 4.0 or 6.0 mA
 
 %% plot one condition/stim pair to check things
-
-el_stim = {'RC1-RC2','RC2-RC3','RC3-RC4'};%,'RC4-RC5'};
-el_record = 'RY2';
+% 
+% el_stim = {'RC1-RC2','RC2-RC3','RC3-RC4'};%,'RC4-RC5'};
+% el_record = 'RY2';
 ref_chan = 'RX8'; % leave [] if not using 
 
 
@@ -104,7 +104,7 @@ for kk = 1:length(el_stim)
     t_win_crp = [0.015 1];
     [average_ccep,average_ccep_names,tt,srate,crp_out,single_trials] = ...
         ccepPCC_loadAverageSubset(fileName,events_table_thisSite,good_channels, channel_areas, baseline_t,t_win_crp,1,1);
-
+    
     chan_ind = find(ismember(channel_names,el_record));
 
     plot_responses = squeeze(single_trials(chan_ind,:,:));

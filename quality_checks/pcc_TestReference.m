@@ -10,7 +10,7 @@ all_subjects = {'01','02','03','04','05','06','07','08'};
 all_hemi = {'r','r','r','l','r','l','l','r'};
 all_runs = {'01','01','01','01','01','01','01','01'};
 
-ss = 3;
+ss = 1;
 bids_sub = all_subjects{ss};
 bids_ses = 'ieeg01';
 bids_task = 'ccep';
@@ -87,14 +87,14 @@ events_table_clipped = bids_clipEvents(events_table_clipped,'electrical_stimulat
 %% plot one condition/stim pair to check things
 
 % sub-1
-% el_stim = {'RC1-RC2','RC2-RC3','RC3-RC4'};%,'RC4-RC5'};
-% el_record = 'RY2';
+el_stim = {'RC1-RC2','RC2-RC3','RC3-RC4'};%,'RC4-RC5'};
+el_record = 'RY2';
 % % sub-2
 % el_stim = {'RB4-RB5'};
 % el_record = 'RZ1';
 % sub-3
-el_stim = {'RB3-RB4'};
-el_record = 'RZ1';
+% el_stim = {'RB3-RB4'};
+% el_record = 'RZ1';
 
 stim_ind = 1;
 events_table_thisSite = bids_clipEvents(events_table_clipped,'electrical_stimulation_site', el_stim{stim_ind});

@@ -164,13 +164,12 @@ end
  
 % area_names = {'Hipp','Amyg','PCC','ACC'};   
 stim_ind = 1;
-measure_ind = 3;
+measure_ind = 2;
 
 
 tt = all_out(1).tt;
 
-sub_color = {[0 0.4470 0.7410],[0.8500 0.3250 0.0980],[0.4660 0.6740 0.1880],[0.4940 0.1840 0.5560],[0.9290 0.6940 0.1250],[0.3010 0.7450 0.9330],[0.6350 0.0780 0.1840],[0.6350 0.0780 0.1840]};
-sub_axis = {[-250 700],[-110 300],[-350 300],[-750 2100],[-200 350],[-500 1000],[-300 350],[-250 750]};% blue, orange, green, purple, mustard, celeste, wine
+sub_color = {[0 0.4470 0.7410],[0.8500 0.3250 0.0980],[0.4660 0.6740 0.1880],[0.4940 0.1840 0.5560],[0.9290 0.6940 0.1250],[0.3010 0.7450 0.9330],[0.6350 0.0780 0.1840],[0.4 0.0 .1]};
 
 figure('Position',[0 0 400 800]), hold on
 
@@ -202,7 +201,8 @@ for ss = 1:8
         xlim([-0.2 .6]), ylim([0 1.7]);
         ylabel('Voltage (L2-normalized)')
         title([area_names{stim_ind} ' -> ' area_names{measure_ind}])
+        xlabel('Time (s)')
     end
    
 end
- xlabel('Time (s)')
+
