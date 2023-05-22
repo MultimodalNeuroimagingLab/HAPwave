@@ -1,5 +1,12 @@
 
-function [events_table,channels_table,electrodes_table,all_out] = pcc_loadAveragesStats(localDataPath,bids_sub,bids_ses,bids_task,bids_run)
+function [events_table,channels_table,electrodes_table,all_out] = pcc_loadAveragesStats(localDataPath,bids_sub,bids_ses,bids_task,bids_run,varargin)
+
+if isempty(varargin)
+    crpFile = fullfile(localDataPath,'derivatives','stats',['sub-' bids_sub],...
+        ['sub-' bids_sub '_ses-' bids_ses '_task-' bids_task '_run-' bids_run '_crp.mat']);
+else
+    crpFile = varargin{1};
+end
 
 % just making sure we always load stats in the same way across scripts.
 
@@ -29,8 +36,6 @@ distLim = 6;
 good_channels = find(ismember(channels_table.type,{'ECOG','SEEG'}) & ismember(channels_table.status,'good'));
 
 % load stats/average CCEPs from outputName
-crpFile = fullfile(localDataPath,'derivatives','stats',['sub-' bids_sub],...
-    ['sub-' bids_sub '_ses-' bids_ses '_task-' bids_task '_run-' bids_run '_crp.mat']);
 load(crpFile,'average_ccep','average_ccep_names','average_ccep_areas','tt','srate','crp_out','channel_names','channel_areas');
 
 all_out.average_ccep = average_ccep;
