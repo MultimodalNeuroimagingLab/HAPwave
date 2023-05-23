@@ -104,8 +104,8 @@ end
 stim_ind = 1;
 measure_ind = 3;
 
+% Get sites that belong to the measured & stim ROI
 these_measured_sites = find(ismember(all_out(ss).channel_areas,area_codes{measure_ind}));
-% Get sites that belong to the stimulated ROI (stim_area)
 these_stim_sites = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{stim_ind}) | ...
     ismember(all_out(ss).average_ccep_areas(:,2),area_codes{stim_ind}));
 
@@ -153,7 +153,7 @@ end
 
 
 title('PCC depths','Blue, superficial | Yellow, deep')
-xlim([-0.2 .6])%, ylim([-2000 4000]);
+xlim([-0.2 .6])
 xlabel('time (s)')%, ylabel('amplitude (uV)')
 
 set(gcf,'PaperPositionMode','auto')

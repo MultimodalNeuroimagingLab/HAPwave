@@ -163,8 +163,8 @@ end
 %% plot CCEPs with N1 in dots and std error 
  
 % area_names = {'Hipp','Amyg','PCC','ACC'};   
-measure_ind = 4;
-stim_ind = 2;
+stim_ind = 5;
+measure_ind = 3;
 
 tt = all_out(1).tt;
 
@@ -200,6 +200,10 @@ for ss = 1:8
         plot(tt, ss + this_set, 'Color',sub_color{ss}, 'LineWidth', .5);
         xlim([-0.2 .6]), ylim([sub_axis{ss}]);
         ylabel('Voltage (uV)')
+
+        ss_sign = width(this_set);
+        txt = 100*ss_sign/sum(ss_resps)
+        text(-.1,ss*.2,num2str(txt))
         title([area_names{stim_ind} ' -> ' area_names{measure_ind}])
     end
    

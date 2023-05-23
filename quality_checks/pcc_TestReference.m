@@ -102,11 +102,11 @@ events_table_thisSite = bids_clipEvents(events_table_clipped,'electrical_stimula
 % Settings for CRP
 baseline_t = [-0.5 -0.05]; 
 t_win_crp = [0.015 1];
-% CAR
+% NOCAR
 [average_ccep_nocar,average_ccep_names,tt,srate,crp_out,single_trials_nocar] = ...
     ccepPCC_loadAverageSubset(fileName,events_table_thisSite,good_channels, channel_areas, baseline_t,t_win_crp,0,1);
 
-% NOCAR
+% CAR
 [average_ccep,average_ccep_names,tt,srate,crp_out,single_trials] = ...
     ccepPCC_loadAverageSubset(fileName,events_table_thisSite,good_channels, channel_areas, baseline_t,t_win_crp,1,1);
 

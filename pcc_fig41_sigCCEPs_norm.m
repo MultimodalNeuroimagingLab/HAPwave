@@ -156,7 +156,7 @@ end
 %% plot CCEPs with N1 in dots and std error 
  
 % area_names = {'Hipp','Amyg','PCC','ACC'};   
-stim_ind = 1;
+stim_ind = 5;
 measure_ind = 3;
 
 
@@ -195,7 +195,7 @@ for ss = 1:8
         xlabel('Time (s)')
        
         ss_sign = width(this_set);
-        txt = 100*ss_sign/sum(ss_resps);      
+        txt = 100*ss_sign/sum(ss_resps)    
         text(-.1,ss*.2,num2str(txt))
         title([area_names{stim_ind} ' -> ' area_names{measure_ind}])
     end
