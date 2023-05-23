@@ -1,6 +1,6 @@
 
 clearvars, close all, clc
-startup
+% startup
 
 %% Plot figure showing how positive and negative peaks come from rec electrodes in different depths
 
@@ -33,12 +33,6 @@ end
 area_codes = {[12123 53 54 12108 12109 12110 12106 12107 11123 59 17 18 11108 11109 11110 11106 11107 10]}; % all areas
 
 nr_subs = length(all_subjects);
-
-out = []; % this will be a area X area structure, with all subjects concatinates for each area
-
-subj_resp_total = zeros(nr_subs,1);               % stim-->measured pair for stats FDR correction
-
-resp_counter = 0; % counting all responses across subjects for this connection
 
 for ss = 1:nr_subs % subject loop
    
@@ -84,8 +78,8 @@ end
 
 
 %% Posterior cingulate
-% rgb_color = {[0 0.4470 0.7410],[0.8500 0.3250 0.0980],[0.4660 0.6740 0.1880],[0.4940 0.1840 0.5560],[0.9290 0.6940 0.1250],[0.3010 0.7450 0.9330],[0.6350 0.0780 0.1840]};
-% blue, orange, green, purple, mustard, celeste, wine
+rgb_color = {[0.3010 0.7450 0.9330],[1 .8 .1],[0.9290 0.6940 0.1250],[0 0.4470 0.7410]};
+rgb_label = {'blue', 'yellow', 'orange', 'light blue'};
 
 area_codes_r = {[12123 53],[54],[12108 12109 12110],[12106 12107],[59]}; % right
 area_codes_l = {[11123 17],[18],[11108 11109 11110],[11106 11107],[10]}; % left
@@ -135,18 +129,18 @@ for kk = 1:length(these_measured_sites)
 
             % we looked at the data and visually split out 2 measure
             % sites that produce different signatures
-            if kk==1 % measurement el 1 (RY1/MPC)
-                plot(all_out(ss).tt, ss + plot_responses_norm,'color',[0 0.4470 0.7410 ],'LineWidth',.85)
-                disp(['blue ' all_out(ss).channel_names(these_measured_sites(kk))])
-            elseif kk==2 % measurement el 2 (RY2/MPC)
-                plot(all_out(ss).tt, ss + plot_responses_norm,'color',[1 .8 .1],'LineWidth',.85)
-                disp(['yellow ' all_out(ss).channel_names(these_measured_sites(kk))])
-            elseif kk==3 % measurement el 3 ((RZ1/PDC)
-                plot(all_out(ss).tt, ss + plot_responses_norm,'color',[.8 .8 .8],'LineWidth',.85)
-                disp(['gray ' all_out(ss).channel_names(these_measured_sites(kk))])
-%                 elseif kk==4 % measurement el 3 ((RZ1/PDC)
-%                     plot(all_out(ss).tt, ss + plot_responses_norm,'color',[1 .8 .1],'LineWidth',.85)
-%                     disp(['yellow ' all_out(ss).channel_names(these_measured_sites(kk))])
+            if kk==1        % waves el1p1, superficial (>2.33mm)
+                plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{1},'LineWidth',.85)
+                disp([rgb_label{1} all_out(ss).channel_names(these_measured_sites(kk))])
+            elseif kk==2    % waves el2p1, deep (<2.33mm)
+                plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{2},'LineWidth',.85)
+                disp([rgb_label{2} all_out(ss).channel_names(these_measured_sites(kk))])
+            elseif kk==3    % waves el1p2, deep (<2.33mm)
+                plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{3},'LineWidth',.85)
+                disp([rgb_label{3} all_out(ss).channel_names(these_measured_sites(kk))])
+            elseif kk==4    % waves el1p3, superficial (>2.33mm)
+                plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{4},'LineWidth',.85)
+                disp([rgb_label{4} all_out(ss).channel_names(these_measured_sites(kk))])
             end
             
             % save outputs
@@ -158,7 +152,7 @@ for kk = 1:length(these_measured_sites)
 end
 
 
-title('Blue=RY1;Yellow=RY2')
+title('PCC depths','Blue, superficial | Yellow, deep')
 xlim([-0.2 .6])%, ylim([-2000 4000]);
 xlabel('time (s)')%, ylabel('amplitude (uV)')
 
