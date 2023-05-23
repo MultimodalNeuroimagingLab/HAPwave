@@ -32,13 +32,6 @@ area_codes = {[12123 53 54 12108 12109 12110 12106 12107 11123 59 17 18 11108 11
 
 nr_subs = length(all_subjects);
 
-out = []; % this will be a area X area structure, with all subjects concatinates for each area
-
-subj_resp_total = zeros(nr_subs,1);               % stim-->measured pair for stats FDR correction
-
-
-resp_counter = 0; % counting all responses across subjects for this connection
-
 for ss = 1:nr_subs % subject loop
    
     % Get sites that belong to the measurement ROI (rec_area)
@@ -164,7 +157,7 @@ end
  
 % area_names = {'Hipp','Amyg','PCC','ACC'};   
 stim_ind = 1;
-measure_ind = 2;
+measure_ind = 3;
 
 
 tt = all_out(1).tt;
@@ -178,10 +171,10 @@ for ss = 1:8
 
     % only this subject
     ss_resps = out(measure_ind,stim_ind).subj_ind==ss;
-    
+
     % only significant responses (FDR corrected)
     sign_resp = out(measure_ind,stim_ind).p<0.05; % adjusted for multiple comparisons
-       
+
     this_set = out(measure_ind,stim_ind).plot_responses_norm(sign_resp & ss_resps,:)';        
 
     % Look for coverage in the stimulated and/or measurement ROI
@@ -194,15 +187,19 @@ for ss = 1:8
         % Coverage in both measurement and stimulated ROI
         % black line if no sign responses     / Meaning: CCEPs were not significant under SEPS of interest ):
         plot([-.2 .8], [ss*.2, ss*.2], 'Color', 'k', 'LineWidth', .7);
-
-
+        
         this_set(tt > -0.010 & tt < 0.010,:) = NaN;
         plot(tt, ss*.2 + this_set, 'Color',sub_color{ss}, 'LineWidth', .5);
         xlim([-0.2 .6]), ylim([0 1.7]);
         ylabel('Voltage (L2-normalized)')
-        title([area_names{stim_ind} ' -> ' area_names{measure_ind}])
         xlabel('Time (s)')
+       
+        ss_sign = width(this_set);
+        txt = 100*ss_sign/sum(ss_resps);      
+        text(-.1,ss*.2,num2str(txt))
+        title([area_names{stim_ind} ' -> ' area_names{measure_ind}])
     end
    
 end
+
 
