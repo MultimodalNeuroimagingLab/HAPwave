@@ -16,7 +16,7 @@ all_subjects = {'01','02','03','04','05','06','07','08'}; %
 all_hemi = {'r','r','r','l','r','l','l','r'};
 all_runs = {'01','01','01','01','01','01','01','01'};
 
-% load the meta data
+% loop through subjects
 for ss = 1:length(all_subjects)
     bids_sub = all_subjects{ss};
     bids_ses = 'ieeg01';

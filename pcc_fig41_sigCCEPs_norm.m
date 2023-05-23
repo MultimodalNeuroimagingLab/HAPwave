@@ -28,7 +28,7 @@ for ss = 1:length(all_subjects)
 end
 
 %% Correct P values for number of comparisons in each subject
-area_codes = {[12123 53 54 12108 12109 12110 12106 12107 11123 59 17 18 11108 11109 11110 11106 11107 10]}; % all areas
+area_codes = {[12123 53 54 12108 12109 12110 12106 12107 11123 49 17 18 11108 11109 11110 11106 11107 10]}; % all areas
 
 nr_subs = length(all_subjects);
 
@@ -80,7 +80,7 @@ set_color = {[0 0.4470 0.7410],[0.8500 0.3250 0.0980],[0.4660 0.6740 0.1880],[0.
 
 % changes to the following:
 area_names = {'Hipp','Amyg','PCC','ACC','ANT'};   
-area_codes_r = {[12123 53],[54],[12108 12109 12110],[12106 12107],[59]}; % right
+area_codes_r = {[12123 53],[54],[12108 12109 12110],[12106 12107],[49]}; % right
 area_codes_l = {[11123 17],[18],[11108 11109 11110],[11106 11107],[10]}; % left
 
 sub_hemi = {'r','r','r','l','r','l','l','r'};
