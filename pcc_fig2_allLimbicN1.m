@@ -72,7 +72,8 @@ for ss = 1:nr_subs % subject loop
     end
     pvals = all_out(ss).crp_p(all_out(ss).hasdata==1);
     qq = 0.05;
-    [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'pdep','no');
+%     [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'pdep','no');
+    [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'dep','no');
     all_out(ss).crp_p_adj(all_out(ss).hasdata==1) = adj_p;
     all_out(ss).h(all_out(ss).hasdata==1) = h;
 end
@@ -257,15 +258,17 @@ for measure_ind = 1:length(area_codes)
         sum_cceps = length(out(measure_ind,stim_ind).p); % total nr of CCEPs
         text(.7,sum_cceps,{sum_cceps},'color',[.5 .5 .5],...
             'HorizontalAlignment','center','VerticalAlignment','bottom') 
-        
-        bar(100*sum(sign_resp)/sum_cceps,'FaceColor',[0 0.4470 0.7410])         % plot bar with sig CRP
+
         sum_CRPs = sum(sign_resp);
-        text(1,sum_CRPs,{sum_CRPs},'color',[0 0.4470 0.7410],...
+        prop_CRPs = 100*sum_CRPs/sum_cceps;
+        bar(prop_CRPs,'FaceColor',[0 0.4470 0.7410])         % plot bar with sig CRP
+        text(1,prop_CRPs,{prop_CRPs},'color',[0 0.4470 0.7410],...
             'HorizontalAlignment','center','VerticalAlignment','bottom')
-        
-        bar(100*sum(n1s)/sum_cceps,'FaceColor',[0.92 0.69 0.12])               % plot bar with N1s
+
         sum_N1s = sum(n1s);
-        text(1,sum_N1s,{sum_N1s},'color',[0.92 0.69 0.12],...
+        prop_N1s = 100*sum_N1s/sum_cceps;
+        bar(prop_N1s,'FaceColor',[0.92 0.69 0.12])               % plot bar with N1s
+        text(1,prop_N1s,{prop_N1s},'color',[0.92 0.69 0.12],...
             'HorizontalAlignment','left','VerticalAlignment','bottom')
         
         ylim([0 101])

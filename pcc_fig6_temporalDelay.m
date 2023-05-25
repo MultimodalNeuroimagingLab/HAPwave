@@ -1,13 +1,10 @@
 
 clearvars, close all, clc
-startup
+% startup
 
 %% Plot figure showing a delay in CCEP depending on stim site
-%% Plot figure showing how positive and negative peaks come from rec electrodes in different depths
-
 % Dependencies: MNL ieeg basics repository
 % cd to HAPwave repository
-
 addpath(genpath(pwd))
 
 % set local path to your BIDS directory:
@@ -34,12 +31,6 @@ end
 area_codes = {[12123 53 54 12108 12109 12110 12106 12107 11123 59 17 18 11108 11109 11110 11106 11107 10]}; % all areas
 
 nr_subs = length(all_subjects);
-
-out = []; % this will be a area X area structure, with all subjects concatinates for each area
-
-subj_resp_total = zeros(nr_subs,1);               % stim-->measured pair for stats FDR correction
-
-resp_counter = 0; % counting all responses across subjects for this connection
 
 for ss = 1:nr_subs % subject loop
    
@@ -78,15 +69,15 @@ for ss = 1:nr_subs % subject loop
     end
     pvals = all_out(ss).crp_p(all_out(ss).hasdata==1);
     qq = 0.05;
-    [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'pdep','no');
+%     [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'pdep','no');
+    [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'dep','no');
     all_out(ss).crp_p_adj(all_out(ss).hasdata==1) = adj_p;
     all_out(ss).h(all_out(ss).hasdata==1) = h;
 end
 
-%% Sub-04, plot temporal delay
-% rgb_color = {[0 0.4470 0.7410],[0.8500 0.3250 0.0980],[0.4660 0.6740 0.1880],[0.4940 0.1840 0.5560],[0.9290 0.6940 0.1250],[0.3010 0.7450 0.9330],[0.6350 0.0780 0.1840]};
-% blue, orange, green, purple, mustard, celeste, wine
-figure('Position',[0 0 500 350]), hold on; %('Position',[0 0 600 200]), hold on
+%% Sub-04 & 08??, plot temporal delay
+rgb_color = {[.9 .18 .9],[0.4660 0.6740 0.1880]};
+rgb_label = {'magenta','green'};
 
 
 area_codes_r = {[12123 53],[54],[12108 12109 12110],[12106 12107],[59]}; % right
@@ -99,7 +90,7 @@ out_plot_responses_norm = [];
 out_subj_ind = [];
 resp_counter = 0;
 
-ss = 4;
+ss = 8;
 
 if isequal(sub_hemi{ss},'l')
     area_codes = area_codes_l;
@@ -110,12 +101,14 @@ end
 stim_ind = 1;
 measure_ind = 3;
 
+% Get sites that belong to the measured & stim ROI
 these_measured_sites = find(ismember(all_out(ss).channel_areas,area_codes{measure_ind}));
-% Get sites that belong to the stimulated ROI (stim_area)
 these_stim_sites = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{stim_ind}) | ...
     ismember(all_out(ss).average_ccep_areas(:,2),area_codes{stim_ind}));
 
-plot(all_out(ss).tt, ss + zeros(size(all_out(ss).tt)),'k')
+
+figure('Position',[0 0 500 350]), hold on; 
+plot(all_out(ss).tt, ss + zeros(size(all_out(ss).tt)),'k');
 
 sign_resp = all_out(ss).crp_p_adj<0.05; % plot p<0.05 FDR corrected
 
@@ -139,32 +132,34 @@ for kk = 1:length(these_measured_sites)
 
             % we looked at the data and visually split out 2 stim pairs
             % that produce different latencies
-            if ll<=3 % stim pair 1 and 2 from LB probe
-                plot(all_out(ss).tt, plot_responses_norm,'color',[0.6350 0.0780 0.4040])
-                disp(['Red, later' all_out(ss).average_ccep_names(these_stim_sites(ll))])
-                resp_peak_late = [];
+            if ss == 4
+                if  ll<=3 % stim pair 1:3 from LB probe
+                    plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{1},'LineWidth',.85)
+                    disp([rgb_label{1} all_out(ss).average_ccep_names(these_stim_sites(ll))])
+                    resp_peak_late = [];
+                elseif ll>=4 % stim pair 4:7 from LC probe
+                    plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{2},'LineWidth',.85)
+                    disp([rgb_label(2) all_out(ss).average_ccep_names(these_stim_sites(ll))])
+                    resp_peak_early = [];
+                end
 
-            elseif ll>=4 % stim pair 3:5 from LC probe
-                plot(all_out(ss).tt, plot_responses_norm,'color',[0.4660 0.6740 0.1880])
-                disp(['Green, early' all_out(ss).average_ccep_names(these_stim_sites(ll))])
-                resp_peak_early = [];
+            elseif ss == 8
+                if   ll>=2 % stim pair 1:3 from RB probe
+                    plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{1},'LineWidth',.85)
+                    disp([rgb_label{1} all_out(ss).average_ccep_names(these_stim_sites(ll))])
+                    resp_peak_late = [];
+                elseif ll<=1 % stim pair 4:7 from RC probe
+                    plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{2},'LineWidth',.85)
+                    disp([rgb_label(2) all_out(ss).average_ccep_names(these_stim_sites(ll))])
+                    resp_peak_early = [];
+                end
+
             end
-
-            % save outputs
-            resp_counter = resp_counter + 1;
-            out_plot_responses_norm(resp_counter,:) = plot_responses_norm;
-            out_subj_ind(resp_counter,:) = ss;
-
-            % find peaks
-            mx_peaks = max(out_plot_responses_norm);
-            peak_time = find(mx_peaks);
-            
         end
     end
 end
-
-title('Green=LC1-LC5; Magenta=LB3-LB5')
-xlim([-0.2 .6]), ylim([-0.1 0.1])
+title('HC-PCC distance','Green, posterior | Magenta, anterior')
+xlim([-0.2 .6]);
 xlabel('Time (s)'),ylabel('Normilized Voltage') 
 
 set(gcf,'PaperPositionMode','auto')

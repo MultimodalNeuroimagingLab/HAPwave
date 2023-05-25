@@ -28,7 +28,7 @@ for ss = 1:length(all_subjects)
 end
 
 %% Correct P values for number of comparisons in each subject
-area_codes = {[12123 53 54 12108 12109 12110 12106 12107 11123 59 17 18 11108 11109 11110 11106 11107 10]}; % all areas
+area_codes = {[12123 53 54 12108 12109 12110 12106 12107 11123 49 17 18 11108 11109 11110 11106 11107 10]}; % all areas
 
 nr_subs = length(all_subjects);
 
@@ -69,7 +69,8 @@ for ss = 1:nr_subs % subject loop
     end
     pvals = all_out(ss).crp_p(all_out(ss).hasdata==1);
     qq = 0.05;
-    [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'pdep','no');
+%     [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'pdep','no');
+    [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'dep','no');
     all_out(ss).crp_p_adj(all_out(ss).hasdata==1) = adj_p;
     all_out(ss).h(all_out(ss).hasdata==1) = h;
 end
@@ -80,7 +81,7 @@ set_color = {[0 0.4470 0.7410],[0.8500 0.3250 0.0980],[0.4660 0.6740 0.1880],[0.
 
 % changes to the following:
 area_names = {'Hipp','Amyg','PCC','ACC','ANT'};   
-area_codes_r = {[12123 53],[54],[12108 12109 12110],[12106 12107],[59]}; % right
+area_codes_r = {[12123 53],[54],[12108 12109 12110],[12106 12107],[49]}; % right
 area_codes_l = {[11123 17],[18],[11108 11109 11110],[11106 11107],[10]}; % left
 
 sub_hemi = {'r','r','r','l','r','l','l','r'};
@@ -153,10 +154,10 @@ for measure_ind = 1:length(area_codes_r) % loop through the inds
 end
 
 
-%% plot CCEPs with N1 in dots and std error 
+%% plot normalized CCEPs 
  
 % area_names = {'Hipp','Amyg','PCC','ACC'};   
-stim_ind = 1;
+stim_ind = 5;
 measure_ind = 3;
 
 
@@ -195,7 +196,7 @@ for ss = 1:8
         xlabel('Time (s)')
        
         ss_sign = width(this_set);
-        txt = 100*ss_sign/sum(ss_resps);      
+        txt = 100*ss_sign/sum(ss_resps)    
         text(-.1,ss*.2,num2str(txt))
         title([area_names{stim_ind} ' -> ' area_names{measure_ind}])
     end

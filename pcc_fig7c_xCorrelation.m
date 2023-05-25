@@ -1,9 +1,7 @@
+clearvars, clc, close all;
 
-clearvars, close all, clc
-% startup
-
-%% Plot figure showing how positive and negative peaks come from rec electrodes in different depths
-
+%% Load subjects variables
+% Script to plot single subject pannels with cross correlation. Stats needed.
 % Dependencies: MNL ieeg basics repository
 % cd to HAPwave repository
 
@@ -18,7 +16,7 @@ all_subjects = {'01','02','03','04','05','06','07','08'}; %
 all_hemi = {'r','r','r','l','r','l','l','r'};
 all_runs = {'01','01','01','01','01','01','01','01'};
 
-% load the meta data
+% loop through subjects
 for ss = 1:length(all_subjects)
     bids_sub = all_subjects{ss};
     bids_ses = 'ieeg01';
@@ -77,11 +75,9 @@ for ss = 1:nr_subs % subject loop
     all_out(ss).h(all_out(ss).hasdata==1) = h;
 end
 
-
-%% Posterior cingulate
-rgb_color = {[0.3010 0.7450 0.9330],[1 .8 .1],[0.9290 0.6940 0.1250],[0 0.4470 0.7410]};
-rgb_label = {'blue', 'yellow', 'orange', 'light blue'};
-
+%% Plot mean of Cross-correlations between ANT and Hippocampal stim
+% subject 2 and 7 had ANT: also show ANT -> PostCingulate
+input_color = {[0 0.4470 0.7410],[0.4660 0.6740 0.1880],[0.6350 0.0780 0.1840],[0.8500 0.3250 0.0980]}; % Blue for hippocampus, Green for ANT, red for confidence interval in time
 area_codes_r = {[12123 53],[54],[12108 12109 12110],[12106 12107],[49]}; % right
 area_codes_l = {[11123 17],[18],[11108 11109 11110],[11106 11107],[10]}; % left
 area_names = {'Hipp','Amyg','PCC','ACC','ANT'};   
@@ -92,7 +88,7 @@ out_plot_responses_norm = [];
 out_subj_ind = [];
 resp_counter = 0;
 
-ss = 5;
+ss = 7;
 
 if isequal(sub_hemi{ss},'l')
     area_codes = area_codes_l;
@@ -100,8 +96,14 @@ elseif isequal(sub_hemi{ss},'r')
     area_codes = area_codes_r;
 end
 
-stim_ind = 1;
-measure_ind = 3;
+% start plotting
+figure('Position',[0 0 500 600]),hold on
+subplot(2,1,1),hold on
+% get Hippocampal significant CCEPs
+resp_counter = 0;resp1_hip2pc = [];  
+measure_ind = 3;    % measuring always in PCC
+
+stim_ind = 1;       % HC stim
 
 % Get sites that belong to the measured & stim ROI
 these_measured_sites = find(ismember(all_out(ss).channel_areas,area_codes{measure_ind}));
@@ -109,17 +111,56 @@ these_stim_sites = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{
     ismember(all_out(ss).average_ccep_areas(:,2),area_codes{stim_ind}));
 
 sign_resp = all_out(ss).crp_p_adj<0.05; % plot p<0.05 FDR corrected
-
+sign_resp(all_out(ss).bad_channels,:) = 0; % bad channels can not be significant
 t_win_cod = [0.015 0.500]; % window for vector length normalization and plotting across subjects
 
-% prepare to plot 
-figure('Position',[0 0 500 350]), hold on; %('Position',[0 0 600 200]), hold on
-plot(all_out(ss).tt, ss + zeros(size(all_out(ss).tt)),'k')
+% walk through pairs, test significance and plot if so
+ for kk = 1:length(these_measured_sites)
+     for ll = 1:length(these_stim_sites)
+         if sign_resp(these_measured_sites(kk),these_stim_sites(ll))==1  %original
+             resp_counter = resp_counter+1;
+             plot_responses = squeeze(all_out(ss).average_ccep(these_measured_sites(kk),these_stim_sites(ll),:));
+             plot_responses(all_out(ss).tt>-0.010 & all_out(ss).tt<0.010) = NaN;
+
+             % scaling to unit length(https://en.wikipedia.org/wiki/Feature_scaling)
+             % unti length taken in same window as stats
+             response_vector_length = sum(plot_responses(all_out(ss).tt>t_win_cod(1) &  all_out(ss).tt<t_win_cod(2)).^2).^.5;
+             plot_responses_norm = plot_responses./(response_vector_length*ones(size(plot_responses))); % normalize (L2 norm) each trial
+             
+             plot(all_out(ss).tt, ss*.2 + zeros(size(all_out(ss).tt)),'k')
+             plot(all_out(ss).tt, ss *.2 + plot_responses_norm,'Color',input_color{4},'LineWidth',1)
+             resp1_hip2pc(resp_counter,:) = plot_responses;
+         end
+     end
+ end
+xlim([-0.2 .6])%,ylim([-2000 2000])
+xlabel('Time (s)')
+ylabel('Normalized Voltage')
+% title('XYZ')
+
+
+% get ANT significant CCEPs
+resp1_ant2pc = []; 
+resp_counter = 0;
+
+stim_ind = 5;       % ANT stim
+
+% Get sites that belong to the measured & stim ROI
+these_measured_sites = find(ismember(all_out(ss).channel_areas,area_codes{measure_ind}));
+these_stim_sites = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{stim_ind}) | ...
+    ismember(all_out(ss).average_ccep_areas(:,2),area_codes{stim_ind}));
+
+sign_resp = all_out(ss).crp_p_adj<0.05; % plot p<0.05 FDR corrected
+sign_resp(all_out(ss).bad_channels,:) = 0; % bad channels can not be significant
+
 
 % walk through pairs, test significance and plot if so
 for kk = 1:length(these_measured_sites)
     for ll = 1:length(these_stim_sites)
-        if sign_resp(these_measured_sites(kk),these_stim_sites(ll))==1
+        if sign_resp(these_measured_sites(kk),these_stim_sites(ll))==1  %original
+            % epochs_include(ismember(events_table.status_description,{'/Interictal-findings/Attribute/Categorical/Categorical-level/Low','/Interictal-findings/Attribute/Categorical/Categorical-level/High'})) = 0;
+            resp_counter = resp_counter+1;
+           
             plot_responses = squeeze(all_out(ss).average_ccep(these_measured_sites(kk),these_stim_sites(ll),:));
             plot_responses(all_out(ss).tt>-0.010 & all_out(ss).tt<0.010) = NaN;
             
@@ -127,37 +168,51 @@ for kk = 1:length(these_measured_sites)
             % unit length taken in same window as stats
             response_vector_length = sum(plot_responses(all_out(ss).tt > t_win_cod(1) &  all_out(ss).tt < t_win_cod(2)) .^ 2) .^ .5;
             plot_responses_norm = plot_responses ./ (response_vector_length*ones(size(plot_responses))); % normalize (L2 norm) each trial
-
-            % we looked at the data and visually split out 2 measure
-            % sites that produce different signatures
-            if kk==1        % waves el1p1, superficial (>2.33mm)
-                plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{1},'LineWidth',.85)
-                disp([rgb_label{1} all_out(ss).channel_names(these_measured_sites(kk))])
-            elseif kk==2    % waves el2p1, deep (<2.33mm)
-                plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{2},'LineWidth',.85)
-                disp([rgb_label{2} all_out(ss).channel_names(these_measured_sites(kk))])
-            elseif kk==3    % waves el1p2, deep (<2.33mm)
-                plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{3},'LineWidth',.85)
-                disp([rgb_label{3} all_out(ss).channel_names(these_measured_sites(kk))])
-            elseif kk==4    % waves el1p3, superficial (>2.33mm)
-                plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{4},'LineWidth',.85)
-                disp([rgb_label{4} all_out(ss).channel_names(these_measured_sites(kk))])
-            end
             
-            % save outputs
-            resp_counter = resp_counter+1;
-            out_plot_responses_norm(resp_counter,:) = plot_responses_norm;
-            out_subj_ind(resp_counter,:) = ss;
+            plot(all_out(ss).tt,.15 + ss*.2 + zeros(size(all_out(ss).tt)),'k')
+            plot(all_out(ss).tt,.15 + ss*.2 + plot_responses_norm,'Color',input_color{2},'LineWidth',1)
+            resp1_ant2pc(resp_counter,:) = plot_responses;
         end
     end
 end
+title(['Sub-0' num2str(ss)]);
+% xlabel('Time (s)')
+% ylabel('Amplitude (uV)')
 
+subplot(2,1,2), hold on
+c1_all = [];
+nn = 1;
+for kk = 1:size(resp1_ant2pc,1)
+    for ll = 1:size(resp1_hip2pc,1)
+        [c1,lags] = xcorr(resp1_ant2pc((kk), all_out(ss).tt >0.015)',resp1_hip2pc((ll), all_out(ss).tt> 0.015)','coeff');
+        c1_all(nn,:) = c1;
+        tt_lags = lags/all_out(ss).srate;
+        tt_set = all_out(ss).tt(all_out(ss).tt>0.015);
+        plot(tt_lags,c1,'Color',[.5 .5 .5 .2],'LineWidth',2)
+        nn = nn + 1;
+    end
+end
+plotCurvConf(tt_lags, c1_all); % plots 95% Confidende interval in gray with 50% transparency
 
-title('PCC depths','Blue, superficial | Yellow, deep')
-xlim([-0.2 .6])
-xlabel('time (s)')%, ylabel('amplitude (uV)')
+mean_c1 = mean(c1_all);
+plot(tt_lags,mean_c1,'color','k','LineWidth',1)
 
-set(gcf,'PaperPositionMode','auto')
-% print(fullfile('./local',figName),'-dpng');%,'-r700';
-% print(fullfile('./local',figName),'-painters','-depsc')%,'-r500',)
+% Bootstrapping and resampling time shift.
+nr_bootstraps = 10000;
+t_shifts = NaN(nr_bootstraps,1);
+for kk = 1:nr_bootstraps
+    this_subset = randi(size(c1_all,1),size(c1_all,1),1);
+    [~,ind_c1] = max(mean(c1_all(this_subset,:),1));
+    t_shifts(kk) = tt_lags(ind_c1);
+end
+
+xline([quantile(t_shifts,.075) quantile(t_shifts,.925)],'-',{median(t_shifts), ' '},'LabelVerticalAlignment','bottom',...
+    'LabelOrientation','horizontal', 'LabelHorizontalAlignment','left',...
+    'Color',input_color{3},'LineWidth',1) % to rotate label use: 'LabelOrientation','horizontal' | 'vertical'(default),
+
+[max_c1] = max(mean(c1_all,1));
+title(['Cross correlation' string(max_c1)])
+xlim([-1 1]), ylim([-0.6 1.2])
+ylabel('Normalized Cross Correlation')
+xlabel('Time shift (s)')
 

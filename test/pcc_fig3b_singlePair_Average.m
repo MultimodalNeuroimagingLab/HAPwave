@@ -1,5 +1,5 @@
 
-clearvars, close all, clc
+clearvars, clc, close all
 
 %% Plot pannels with CCEPs coming from single-pair
 addpath(genpath(pwd));
@@ -87,12 +87,9 @@ ccep_stim_areas_limbic = ccep_stim_areas(sum(ccep_stim_areas,2)>0,:);
 ccep_stim_names_limbic = ccep_stim_names(sum(ccep_stim_areas,2)>0,:);
 events_table_clipped = bids_clipEvents(events_table_clipped,'electrical_stimulation_site', ccep_stim_names_limbic); % keep only events with stim current == 4.0 or 6.0 mA
 
-%% plot one condition/stim pair to check things
-% 
-% el_stim = {'RC1-RC2','RC2-RC3','RC3-RC4'};%,'RC4-RC5'};
-% el_record = 'RY2';
-ref_chan = 'RX8'; % leave [] if not using 
-
+%% plot responses from Sub-01
+el_stim = {'RC1-RC2','RC2-RC3','RC3-RC4'};%,'RC4-RC5'};
+el_record = 'RY2';
 
 figure('Position',[0 0 550 800]), hold on;
 for kk = 1:length(el_stim)
@@ -102,6 +99,7 @@ for kk = 1:length(el_stim)
     % Settings for CRP
     baseline_t = [-0.5 -0.05]; 
     t_win_crp = [0.015 1];
+    % CAR
     [average_ccep,average_ccep_names,tt,srate,crp_out,single_trials] = ...
         ccepPCC_loadAverageSubset(fileName,events_table_thisSite,good_channels, channel_areas, baseline_t,t_win_crp,1,1);
     
@@ -112,21 +110,20 @@ for kk = 1:length(el_stim)
     % plot single and average responses
     subplot(3,1,kk), hold on    
     plot(tt(tt >0.010 & tt <2),zeros(size(tt(tt >0.010 & tt <2))),'k:') % plot zero line
-    plot_responses(tt > -0.010 & tt < 0.010) = NaN; % do not plot stim artifact period
     plot(tt,plot_responses,'Color',[.7 .7 .7 .3]) % single responses in gray
     plot(tt,mean(plot_responses),'k','LineWidth',1.5) % mean in thicker black line
-% %     Confidence interval doesn't work
-%     plotCurvConf(ttt, plot_responses,'k');% plots 95% Confidende interval in gray with 50% transparency
-    
+
     % set axis and labels
     xlabel('Time(s)'), xlim([-.2 2]);
-    ylabel('Amplitude (uV)'),ylim([-400 1000]);
-%     title((['Sub-' bids_sub ' Hippocampal ' el_stim(kk) ' in ' el_record]),'FontSize',3);
+    ylabel('Voltage (uV)'),ylim([-400 1100]);
 end
-
 %%
-%% Plot responses from sub 8
+fname = fullfile('/Users/M219978/Documents/Local-copies/BIDS_projects/PCC/derivatives/matlabOut/fig3/s1_PCCinputs')
+kjm_printfig(fname,[6 6])
 %%
+%% plot responses from Sub-08
+%%
+clearvars, clc, close all
 
 addpath(genpath(pwd));
 
@@ -213,13 +210,9 @@ ccep_stim_areas_limbic = ccep_stim_areas(sum(ccep_stim_areas,2)>0,:);
 ccep_stim_names_limbic = ccep_stim_names(sum(ccep_stim_areas,2)>0,:);
 events_table_clipped = bids_clipEvents(events_table_clipped,'electrical_stimulation_site', ccep_stim_names_limbic); % keep only events with stim current == 4.0 or 6.0 mA
 
-
-
 %% plot one condition/stim pair to check things
-
 el_stim = {'RC1-RC2'}; % stim site with 55 trials
 el_record = {'RZ1','RPO1','RQ1'}; % all PCC sites
-ref_chan = 'RX7'; % reference to white matter. Leave [] if not using
 
 events_table_thisSite = bids_clipEvents(events_table_clipped,'electrical_stimulation_site', el_stim);
 
@@ -240,14 +233,14 @@ for kk = 1:length(el_record)
     % plot single and average responses
     subplot(3,1,kk), hold on    
     plot(tt(tt >0.010 & tt <2),zeros(size(tt(tt >0.010 & tt <2))),'k:') % plot zero line
-    plot_responses(tt > -0.010 & tt < 0.010) = NaN; % do not plot stim artifact period
     plot(tt,plot_responses,'Color',[.7 .7 .7 .3]) % single responses in gray
     plot(tt,mean(plot_responses),'k','LineWidth',1.5) % mean in thicker black line
-% %     Confidence interval doesn't work
-%     plotCurvConf(ttt, plot_responses,'k');% plots 95% Confidende interval in gray with 50% transparency
     
     % set axis and labels
     xlabel('Time(s)'), xlim([-.2 2]);
-    ylabel('Amplitude (uV)'),ylim([-400 1000]);
-%     title((['Sub-' bids_sub ' Hippocampal ' el_stim(kk) ' in ' el_record]),'FontSize',3);
+    ylabel('Voltage (uV)'),ylim([-400 1100]);
 end
+
+%%
+fname = fullfile('/Users/M219978/Documents/Local-copies/BIDS_projects/PCC/derivatives/matlabOut/fig3/s8_PCCoutputs')
+kjm_printfig(fname,[6 6])

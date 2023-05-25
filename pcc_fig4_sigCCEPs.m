@@ -16,7 +16,7 @@ all_subjects = {'01','02','03','04','05','06','07','08'}; %
 all_hemi = {'r','r','r','l','r','l','l','r'};
 all_runs = {'01','01','01','01','01','01','01','01'};
 
-% load the meta data
+% loop through subjects
 for ss = 1:length(all_subjects)
     bids_sub = all_subjects{ss};
     bids_ses = 'ieeg01';
@@ -76,7 +76,8 @@ for ss = 1:nr_subs % subject loop
     end
     pvals = all_out(ss).crp_p(all_out(ss).hasdata==1);
     qq = 0.05;
-    [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'pdep','no');
+%     [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'pdep','no');
+    [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'dep','no');
     all_out(ss).crp_p_adj(all_out(ss).hasdata==1) = adj_p;
     all_out(ss).h(all_out(ss).hasdata==1) = h;
 end
@@ -162,9 +163,9 @@ end
 
 %% plot CCEPs with N1 in dots and std error 
  
-% area_names = {'Hipp','Amyg','PCC','ACC'};   
-measure_ind = 4;
+% area_names = {'Hipp','Amyg','PCC','ACC','ANT'};   
 stim_ind = 2;
+measure_ind = 3;
 
 tt = all_out(1).tt;
 
@@ -200,6 +201,10 @@ for ss = 1:8
         plot(tt, ss + this_set, 'Color',sub_color{ss}, 'LineWidth', .5);
         xlim([-0.2 .6]), ylim([sub_axis{ss}]);
         ylabel('Voltage (uV)')
+
+        ss_sign = width(this_set);
+        txt = 100*ss_sign/sum(ss_resps)
+        text(-.1,ss*.2,num2str(txt))
         title([area_names{stim_ind} ' -> ' area_names{measure_ind}])
     end
    
