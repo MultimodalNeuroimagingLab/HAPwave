@@ -238,7 +238,7 @@ end
 % xlim([-0.2 .6]), ylim([10 150]);
 % xlabel('Time (s)'), ylabel('Normalized Amplitude')
 
-%% now get proportion of N1s of all CRPs
+%% now get proportion of N1s 
 
 figure('Position',[0 0 300 800]), hold on
 
@@ -251,6 +251,43 @@ for measure_ind = 1:length(area_codes)
        
         % all N1s 
         n1s = ~isnan(out(measure_ind,stim_ind).n1ampl); % found and N1 (pos or neg)
+        
+%         bar(length(out(measure_ind,stim_ind).p),'FaceColor',[.9 .9 .9]) % plot bar with all responses?
+        bar(100,'FaceColor',[.9 .9 .9]) % plot bar with all responses?
+        
+        sum_cceps = length(out(measure_ind,stim_ind).p); % total nr of CCEPs
+        text(.7,sum_cceps,{sum_cceps},'color',[.5 .5 .5],...
+            'HorizontalAlignment','center','VerticalAlignment','bottom') 
+
+        sum_CRPs = sum(sign_resp);
+        prop_CRPs = 100*sum_CRPs/sum_cceps;
+        bar(prop_CRPs,'FaceColor',[0 0.4470 0.7410])         % plot bar with sig CRP
+        text(1,prop_CRPs,{prop_CRPs},'color',[0 0.4470 0.7410],...
+            'HorizontalAlignment','center','VerticalAlignment','bottom')
+
+        sum_N1s = sum(n1s);
+        prop_N1s = 100*sum_N1s/sum_cceps;
+        bar(prop_N1s,'FaceColor',[0.92 0.69 0.12])               % plot bar with N1s
+        text(1,prop_N1s,{prop_N1s},'color',[0.92 0.69 0.12],...
+            'HorizontalAlignment','left','VerticalAlignment','bottom')
+        
+        ylim([0 101])
+    end
+end
+
+%% now get proportion of N1s of all CRPs
+
+figure('Position',[0 0 300 800]), hold on
+
+for measure_ind = 1:length(area_codes)
+    for stim_ind = 1:length(area_codes)
+        subplot(length(area_codes), length(area_codes), (measure_ind-1) * length(area_codes) + stim_ind),hold on
+
+        % all significant responses 
+        sign_resp = out(measure_ind,stim_ind).p<0.05; % adjusted for multiple comparisons
+       
+        % all N1s 
+        n1s = ~isnan(out(measure_ind,stim_ind).n1ampl) & sign_resp; % found and N1 (pos or neg)
         
 %         bar(length(out(measure_ind,stim_ind).p),'FaceColor',[.9 .9 .9]) % plot bar with all responses?
         bar(100,'FaceColor',[.9 .9 .9]) % plot bar with all responses?
