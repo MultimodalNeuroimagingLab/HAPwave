@@ -143,11 +143,11 @@ for kk = 1:length(these_measured_sites)
                 end
 
             elseif ss == 8
-                if   ll<=1 % stim pair 1:3 from RB probe
+                if   ll>=2 % stim pair 1:3 from RB probe
                     plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{1},'LineWidth',.85)
                     disp([rgb_label{1} all_out(ss).average_ccep_names(these_stim_sites(ll))])
                     resp_peak_late = [];
-                elseif ll>=2 % stim pair 4:7 from RC probe
+                elseif ll<=1 % stim pair 4:7 from RC probe
                     plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{2},'LineWidth',.85)
                     disp([rgb_label(2) all_out(ss).average_ccep_names(these_stim_sites(ll))])
                     resp_peak_early = [];
