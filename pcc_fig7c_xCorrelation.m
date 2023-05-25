@@ -88,7 +88,7 @@ out_plot_responses_norm = [];
 out_subj_ind = [];
 resp_counter = 0;
 
-ss = 2;
+ss = 7;
 
 if isequal(sub_hemi{ss},'l')
     area_codes = area_codes_l;

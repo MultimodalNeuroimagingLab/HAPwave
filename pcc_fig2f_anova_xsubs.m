@@ -77,7 +77,8 @@ for ss = 1:nr_subs % subject loop
     end
     pvals = all_out(ss).crp_p(all_out(ss).hasdata==1);
     qq = 0.05;
-    [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'pdep','no');
+%     [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'pdep','no');
+    [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'dep','no');
     all_out(ss).crp_p_adj(all_out(ss).hasdata==1) = adj_p;
     all_out(ss).h(all_out(ss).hasdata==1) = h;
 end
@@ -225,10 +226,10 @@ stim_site = [pcc_hc_stimgroup(:); acc_hc_stimgroup(:); pcc_amg_stimgroup(:); acc
 measure_site = [pcc_hc_measgroup(:); acc_hc_measgroup(:); pcc_amg_measgroup(:); acc_amg_measgroup(:)]; % measurement group
 
 plot_groups = zeros(size(stim_site));
-plot_groups(ismember(stim_site,'HC') & ismember(measure_site,'PCC')) = 1;
-plot_groups(ismember(stim_site,'AMG') & ismember(measure_site,'PCC')) = 2;
-plot_groups(ismember(stim_site,'HC') & ismember(measure_site,'ACC')) = 3;
-plot_groups(ismember(stim_site,'AMG') & ismember(measure_site,'ACC')) = 4;
+plot_groups(ismember(stim_site,'HC') & ismember(measure_site,'ACC')) = 1;
+plot_groups(ismember(stim_site,'AMG') & ismember(measure_site,'ACC')) = 2;
+plot_groups(ismember(stim_site,'HC') & ismember(measure_site,'PCC')) = 3;
+plot_groups(ismember(stim_site,'AMG') & ismember(measure_site,'PCC')) = 4;
 
 % X = [X; NaN; NaN; NaN; NaN];
 % plot_groups = [plot_groups; 1; 2; 3; 4];

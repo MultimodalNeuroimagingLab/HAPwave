@@ -154,10 +154,10 @@ for measure_ind = 1:length(area_codes_r) % loop through the inds
 end
 
 
-%% plot CCEPs with N1 in dots and std error 
+%% plot normalized CCEPs 
  
 % area_names = {'Hipp','Amyg','PCC','ACC'};   
-stim_ind = 1;
+stim_ind = 5;
 measure_ind = 3;
 
 
