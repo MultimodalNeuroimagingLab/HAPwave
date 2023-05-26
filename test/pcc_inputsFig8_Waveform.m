@@ -2,9 +2,14 @@ clearvars, clc, close all
 % startup
 
 %% Load stats across subs
-% cd to pcc_project repository
+% Dependencies: MNL ieeg basics repository
+% cd to HAPwave repository
 addpath(genpath(pwd))
-% set local path to your BIDs directory:
+
+% set local path to your BIDS directory:
+myPath = setLocalDataPath(1);
+localDataPath = myPath.input;
+
 
 % load the meta data
 all_subjects = {'01','02','03','04','05','06','07','08'}; % 
@@ -13,7 +18,7 @@ all_runs = {'01','01','01','01','01','01','01','01'};
 
 t_win_cod = [0.015 .5];
 
-for ss = 1:7%length(all_subjects)
+for ss = 1:8%length(all_subjects)
     bids_sub = all_subjects{ss};
     bids_ses = 'ieeg01';
     bids_task = 'ccep';
