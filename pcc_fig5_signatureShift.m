@@ -1,12 +1,10 @@
 
 clearvars, close all, clc
-% startup
 
 %% Plot figure showing how positive and negative peaks come from rec electrodes in different depths
 
-% Dependencies: MNL ieeg basics repository
+% Dependencies: MNL ieeg basics repository, matmef, & vistasoft github repositories
 % cd to HAPwave repository
-
 addpath(genpath(pwd))
 
 % set local path to your BIDS directory:
@@ -14,7 +12,7 @@ myPath = setLocalDataPath(1);
 localDataPath = myPath.input;
 
 % load the meta data
-all_subjects = {'01','02','03','04','05','06','07','08'}; % 
+all_subjects = {'01','02','03','04','05','06','07','08','09','10','11','12'}; % 
 all_hemi = {'r','r','r','l','r','l','l','r'};
 all_runs = {'01','01','01','01','01','01','01','01'};
 
@@ -71,7 +69,6 @@ for ss = 1:nr_subs % subject loop
     end
     pvals = all_out(ss).crp_p(all_out(ss).hasdata==1);
     qq = 0.05;
-%     [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'pdep','no');
     [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'dep','no');
     all_out(ss).crp_p_adj(all_out(ss).hasdata==1) = adj_p;
     all_out(ss).h(all_out(ss).hasdata==1) = h;
@@ -79,8 +76,8 @@ end
 
 
 %% Posterior cingulate
-rgb_color = {[0.3010 0.7450 0.9330],[1 .8 .1],[0.9290 0.6940 0.1250],[0 0.4470 0.7410]};
-rgb_label = {'blue', 'yellow', 'orange', 'light blue'};
+rgb_color = {[0 0.4470 0.7410],[0.3010 0.7450 0.9330],[0.9290 0.6940 0.1250],[1 .8 .1]};
+rgb_label = {'blue','light blue','yellow','light yellow'};
 
 area_codes_r = {[12123 53],[54],[12108 12109 12110],[12106 12107],[49]}; % right
 area_codes_l = {[11123 17],[18],[11108 11109 11110],[11106 11107],[10]}; % left
@@ -92,7 +89,7 @@ out_plot_responses_norm = [];
 out_subj_ind = [];
 resp_counter = 0;
 
-ss = 5;
+ss = 1;
 
 if isequal(sub_hemi{ss},'l')
     area_codes = area_codes_l;
@@ -128,22 +125,17 @@ for kk = 1:length(these_measured_sites)
             response_vector_length = sum(plot_responses(all_out(ss).tt > t_win_cod(1) &  all_out(ss).tt < t_win_cod(2)) .^ 2) .^ .5;
             plot_responses_norm = plot_responses ./ (response_vector_length*ones(size(plot_responses))); % normalize (L2 norm) each trial
 
-            % we looked at the data and visually split out 2 measure
             % sites that produce different signatures
-            if kk==1        % waves el1p1, superficial (>2.33mm)
+            if all_out(ss).elec_relDist(these_measured_sites(kk)) > 2.3       % is a superficial contact (>2.33mm)
                 plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{1},'LineWidth',.85)
-                disp([rgb_label{1} all_out(ss).channel_names(these_measured_sites(kk))])
-            elseif kk==2    % waves el2p1, deep (<2.33mm)
-                plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{2},'LineWidth',.85)
-                disp([rgb_label{2} all_out(ss).channel_names(these_measured_sites(kk))])
-            elseif kk==3    % waves el1p2, deep (<2.33mm)
+                disp([all_out(ss).channel_names{these_measured_sites(kk)} ...
+                    ' superficial (' rgb_label{1} ')']);
+            elseif all_out(ss).elec_relDist(these_measured_sites(kk)) <= 2.3  % is a deep contact (<2.33mm)
                 plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{3},'LineWidth',.85)
-                disp([rgb_label{3} all_out(ss).channel_names(these_measured_sites(kk))])
-            elseif kk==4    % waves el1p3, superficial (>2.33mm)
-                plot(all_out(ss).tt, ss + plot_responses_norm,'color',rgb_color{4},'LineWidth',.85)
-                disp([rgb_label{4} all_out(ss).channel_names(these_measured_sites(kk))])
+                disp([all_out(ss).channel_names{these_measured_sites(kk)} ...
+                    ' deep (' rgb_label{3} ')']);
             end
-            
+
             % save outputs
             resp_counter = resp_counter+1;
             out_plot_responses_norm(resp_counter,:) = plot_responses_norm;
@@ -156,8 +148,3 @@ end
 title('PCC depths','Blue, superficial | Yellow, deep')
 xlim([-0.2 .6])
 xlabel('time (s)')%, ylabel('amplitude (uV)')
-
-set(gcf,'PaperPositionMode','auto')
-% print(fullfile('./local',figName),'-dpng');%,'-r700';
-% print(fullfile('./local',figName),'-painters','-depsc')%,'-r500',)
-
