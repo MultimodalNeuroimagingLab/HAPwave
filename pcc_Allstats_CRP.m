@@ -3,7 +3,7 @@ clearvars, close all, clc
 % startup
 
 %% Get stats across subs
-% Dependencies: Van den Boom matmef repository: https://github.com/MaxvandenBoom/matmef
+% Dependencies: Mnl ieeg basics, matmef, & vistasoft repositories
 
 addpath(genpath(pwd));
 

@@ -1,4 +1,6 @@
 clearvars, clc, close all
+
+%% Plot mean responses across subjects 
 addpath(genpath(pwd))
 
 % set local path to your BIDS directory:
@@ -23,19 +25,10 @@ end
 
 
 %% Correct P values for number of comparisons in each subject
-
 area_codes = {[12123 53 54 12108 12109 12110 12106 12107 59 11123 17 18 11108 11109 11110 11106 11107 10]}; % all areas
-
 nr_subs = length(all_subjects);
 
-out = []; % this will be a area X area structure, with all subjects concatinates for each area
-
-subj_resp_total = zeros(nr_subs,1);               % stim-->measured pair for stats FDR correction
-
-
-resp_counter = 0; % counting all responses across subjects for this connection
-
-for ss = 1:nr_subs % subject loop
+for ss = 1:nr_subs  % subject loop
    
     % Get sites that belong to the measurement ROI (rec_area)
     these_measured_sites = find(ismember(all_out(ss).channel_areas,area_codes{1}));
@@ -72,7 +65,6 @@ for ss = 1:nr_subs % subject loop
     end
     pvals = all_out(ss).crp_p(all_out(ss).hasdata==1);
     qq = 0.05;
-%     [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'pdep','no');
     [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'dep','no');
     all_out(ss).crp_p_adj(all_out(ss).hasdata==1) = adj_p;
     all_out(ss).h(all_out(ss).hasdata==1) = h;
@@ -87,10 +79,6 @@ area_names = {'Hipp','Amyg','PCC','ACC'};
 area_codes_r = {[12123 53],[54],[12108 12109 12110],[12106 12107]}; % right
 area_codes_l = {[11123 17],[18],[11108 11109 11110],[11106 11107]}; % left
 
-sub_hemi = {'r','r','r','l','r','l','l','r'};
-
-nr_subs = length(sub_hemi);
-
 out = []; % this will be a area X area structure, with all subjects concatinates for each area
 
 subj_resp_total = zeros(nr_subs,1);               % stim-->measured pair for stats FDR correction
@@ -103,9 +91,9 @@ for measure_ind = 1:length(area_codes_r) % loop through the inds
         resp_counter = 0; % counting all responses across subjects for this connection
 
         for ss = 1:nr_subs % subject loop
-            if isequal(sub_hemi{ss},'l')
+            if isequal(all_hemi{ss},'l')
                 area_codes = area_codes_l;
-            elseif isequal(sub_hemi{ss},'r')
+            elseif isequal(all_hemi{ss},'r')
                 area_codes = area_codes_r;
             end
 
@@ -234,9 +222,6 @@ for measure_ind = 1:length(area_codes)
     end
     xlim([0 1]),ylim([-0.08 0.08])
 end
-
-% xlim([-0.2 .6]), ylim([10 150]);
-% xlabel('Time (s)'), ylabel('Normalized Amplitude')
 
 %% now get proportion of N1s 
 
