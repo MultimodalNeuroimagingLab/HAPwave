@@ -4,7 +4,6 @@ clearvars, close all, clc
 %% Load stats across subs
 % Dependencies: MNL ieeg basics repository
 % cd to HAPwave repository
-
 addpath(genpath(pwd))
 
 % set local path to your BIDS directory:
@@ -32,7 +31,7 @@ area_codes = {[12123 53 54 12108 12109 12110 12106 12107 11123 49 17 18 11108 11
 
 nr_subs = length(all_subjects);
 
-for ss = 1:nr_subs % subject loop
+for ss = 1:nr_subs % subject loopx
    
     % Get sites that belong to the measurement ROI (rec_area)
     these_measured_sites = find(ismember(all_out(ss).channel_areas,area_codes{1}));
@@ -69,7 +68,6 @@ for ss = 1:nr_subs % subject loop
     end
     pvals = all_out(ss).crp_p(all_out(ss).hasdata==1);
     qq = 0.05;
-%     [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'pdep','no');
     [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'dep','no');
     all_out(ss).crp_p_adj(all_out(ss).hasdata==1) = adj_p;
     all_out(ss).h(all_out(ss).hasdata==1) = h;
@@ -157,8 +155,8 @@ end
 %% plot normalized CCEPs 
  
 % area_names = {'Hipp','Amyg','PCC','ACC'};   
-stim_ind = 5;
-measure_ind = 3;
+stim_ind = 2;
+measure_ind = 2;
 
 
 tt = all_out(1).tt;
