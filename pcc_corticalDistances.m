@@ -2,15 +2,13 @@
 % This is an example script where we calculate the distance for electrodes
 % to the closest point on the pial and gray/white matter surface.
 
-%%
+%% Dependencies: MNL ieeg basics & vistasoft github repositories
 addpath(genpath(pwd))
 
 % set local path to your BIDS directory:
 myPath = setLocalDataPath(1);
 localDataPath = myPath.input;
 
-
-% bids_subjects = {'MSEL01796','MSEL01896','MSEL01897','MSEL01915','MSEL01944','MSEL02016','MSEL02108'};
 bids_subjects = {'01','02','03','04','05','06','07','08'};
 
 for ss = 1:length(bids_subjects)
