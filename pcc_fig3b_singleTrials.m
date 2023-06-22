@@ -161,5 +161,5 @@ for kk = 1:length(el_record)
 end
 
 %% save 
-fname = fullfile(localDataPath,'derivatives','matlabOut','fig3','s8_PCCsingleTrials')
+fname = fullfile(localDataPath,'derivatives','matlabOut','fig3','s8_PCCsingleTrials');
 kjm_printfig(fname,[6 6])

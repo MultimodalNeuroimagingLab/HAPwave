@@ -199,8 +199,13 @@ measure_site = [pcc_hc_measgroup(:); acc_hc_measgroup(:); pcc_amg_measgroup(:); 
 tbl = table(y,categorical(stim_site),categorical(measure_site),categorical(sub_ind),...
     'VariableNames',{'ccep_val','stim_site','measure_site','sub_ind'});
 
-lme = fitlme(tbl,'ccep_val ~ 1 + stim_site*measure_site + (1|sub_ind)') % with interaction
+% lme = fitlme(tbl,'ccep_val ~ 1 + stim_site*measure_site + (1|sub_ind)') % submitted before
+% lme = fitlme(tbl,'ccep_val ~ 1 + stim_site*measure_site + (ccep_val|sub_ind)') % with random slope? 
+lme = fitlme(tbl,'ccep_val ~ 1 + stim_site*measure_site + (stim_site*measure_site|sub_ind)') % with random slope? 
+anova(lme); % perform F-test that all fixed-effects coefficients are zero
+anova(lme,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
 
+%%
 % now test only for PCC
 sub_ind = [sub_ind1; sub_ind3];
 y = [pcc_hc_amp(:); pcc_amg_amp(:)];
@@ -208,6 +213,8 @@ stim_site = [pcc_hc_stimgroup(:); pcc_amg_stimgroup(:)]; % stim group
 tbl = table(y,categorical(stim_site),categorical(sub_ind),...
     'VariableNames',{'ccep_val','stim_site','sub_ind'});
 lme = fitlme(tbl,'ccep_val ~ 1 + stim_site + (1|sub_ind)') % with interaction
+anova(lme); % perform F-test that all fixed-effects coefficients are zero
+anova(lme,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
 
 % now test only for ACC
 sub_ind = [sub_ind2; sub_ind4];
@@ -216,6 +223,9 @@ stim_site = [acc_hc_stimgroup(:); acc_amg_stimgroup(:)]; % stim group
 tbl = table(y,categorical(stim_site),categorical(sub_ind),...
     'VariableNames',{'ccep_val','stim_site','sub_ind'});
 lme = fitlme(tbl,'ccep_val ~ 1 + stim_site + (1|sub_ind)') % with interaction
+anova(lme); % perform F-test that all fixed-effects coefficients are zero
+anova(lme,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
+
 
 %% Distribution plot
 
