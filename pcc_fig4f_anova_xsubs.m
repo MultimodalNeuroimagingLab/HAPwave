@@ -198,33 +198,47 @@ measure_site = [pcc_hc_measgroup(:); acc_hc_measgroup(:); pcc_amg_measgroup(:); 
 
 tbl = table(y,categorical(stim_site),categorical(measure_site),categorical(sub_ind),...
     'VariableNames',{'ccep_val','stim_site','measure_site','sub_ind'});
-
-% lme = fitlme(tbl,'ccep_val ~ 1 + stim_site*measure_site + (1|sub_ind)') % submitted before
-% lme = fitlme(tbl,'ccep_val ~ 1 + stim_site*measure_site + (ccep_val|sub_ind)') % with random slope? 
-lme = fitlme(tbl,'ccep_val ~ 1 + stim_site*measure_site + (stim_site*measure_site|sub_ind)') % with random slope? 
+%%
+lme = fitlme(tbl,'ccep_val ~ 1 + stim_site*measure_site + (1|sub_ind)'); % submitted before
 anova(lme); % perform F-test that all fixed-effects coefficients are zero
 anova(lme,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
+
+lme2 = fitlme(tbl,'ccep_val ~ 1 + stim_site*measure_site + (1 + stim_site*measure_site|sub_ind)'); % with random slope? 
+anova(lme2); % perform F-test that all fixed-effects coefficients are zero
+anova(lme2,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
+
+lme3 = fitlme(tbl,'ccep_val ~ 1 + stim_site*measure_site + (1|sub_ind) + (-1 + stim_site*measure_site|sub_ind)'); % with random slope? 
+anova(lme3); % perform F-test that all fixed-effects coefficients are zero
+anova(lme3,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator deg
+
+%% Compare models
+% Run a Theoretical Likelihood Ratio Test to choose the model to use
+% [compTbl,siminfo] = compare(lme,lme2,'CheckNesting',true,'NSim',1000);
+compare(lme3,lme2,'CheckNesting',true,'NSim',1000);
+[lmecomp,siminfo] = compare(lme,lme3,'CheckNesting',true,'NSim',1000);
 
 %%
 % now test only for PCC
 sub_ind = [sub_ind1; sub_ind3];
 y = [pcc_hc_amp(:); pcc_amg_amp(:)];
 stim_site = [pcc_hc_stimgroup(:); pcc_amg_stimgroup(:)]; % stim group
-tbl = table(y,categorical(stim_site),categorical(sub_ind),...
+tblpcc = table(y,categorical(stim_site),categorical(sub_ind),...
     'VariableNames',{'ccep_val','stim_site','sub_ind'});
-lme = fitlme(tbl,'ccep_val ~ 1 + stim_site + (1|sub_ind)') % with interaction
-anova(lme); % perform F-test that all fixed-effects coefficients are zero
-anova(lme,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
+% lme = fitlme(tbl,'ccep_val ~ 1 + stim_site + (1|sub_ind)') % with interaction
+lmepcc = fitlme(tbl,'ccep_val ~ 1 + stim_site + (stim_site|sub_ind)') % with random slope? 
+anova(lmepcc); % perform F-test that all fixed-effects coefficients are zero
+anova(lmepcc,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
 
 % now test only for ACC
 sub_ind = [sub_ind2; sub_ind4];
 y = [acc_hc_amp(:); acc_amg_amp(:)];
 stim_site = [acc_hc_stimgroup(:); acc_amg_stimgroup(:)]; % stim group
-tbl = table(y,categorical(stim_site),categorical(sub_ind),...
+tblacc = table(y,categorical(stim_site),categorical(sub_ind),...
     'VariableNames',{'ccep_val','stim_site','sub_ind'});
-lme = fitlme(tbl,'ccep_val ~ 1 + stim_site + (1|sub_ind)') % with interaction
-anova(lme); % perform F-test that all fixed-effects coefficients are zero
-anova(lme,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
+% lmeacc = fitlme(tbl,'ccep_val ~ 1 + stim_site + (1|sub_ind)') % with interaction
+lmeacc = fitlme(tbl,'ccep_val ~ 1 + stim_site + (stim_site|sub_ind)') % with random slope? 
+anova(lmeacc); % perform F-test that all fixed-effects coefficients are zero
+anova(lmeacc,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
 
 
 %% Distribution plot
