@@ -199,21 +199,20 @@ measure_site = [pcc_hc_measgroup(:); acc_hc_measgroup(:); pcc_amg_measgroup(:); 
 tbl = table(y,categorical(stim_site),categorical(measure_site),categorical(sub_ind),...
     'VariableNames',{'ccep_val','stim_site','measure_site','sub_ind'});
 %%
-lme = fitlme(tbl,'ccep_val ~ 1 + stim_site*measure_site + (1|sub_ind)'); % submitted before
-anova(lme); % perform F-test that all fixed-effects coefficients are zero
-anova(lme,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
+lme = fitlme(tbl,'ccep_val ~ 1 + stim_site*measure_site + (1|sub_ind)'); % Random intercept model with a fixed slope
+anova(lme);                                                             % perform F-test that all fixed-effects coefficients are zero
+anova(lme,'DFMethod','satterthwaite')                                   % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
 
-lme2 = fitlme(tbl,'ccep_val ~ 1 + stim_site*measure_site + (1 + stim_site*measure_site|sub_ind)'); % with random slope? 
-anova(lme2); % perform F-test that all fixed-effects coefficients are zero
-anova(lme2,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
+lme2 = fitlme(tbl,'ccep_val ~ 1 + stim_site*measure_site + (1 + stim_site*measure_site|sub_ind)'); % Random intercept and slope, with possible correlation between them
+anova(lme2);                                                              % perform F-test that all fixed-effects coefficients are zero
+anova(lme2,'DFMethod','satterthwaite')                                    % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
 
-lme3 = fitlme(tbl,'ccep_val ~ 1 + stim_site*measure_site + (1|sub_ind) + (-1 + stim_site*measure_site|sub_ind)'); % with random slope? 
-anova(lme3); % perform F-test that all fixed-effects coefficients are zero
-anova(lme3,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator deg
+lme3 = fitlme(tbl,'ccep_val ~ 1 + stim_site*measure_site + (1|sub_ind) + (-1 + stim_site*measure_site|sub_ind)'); % Independent random effects terms for intercept and slope
+anova(lme3);                                                              % perform F-test that all fixed-effects coefficients are zero
+anova(lme3,'DFMethod','satterthwaite')                                    % get degrees of freedom w Satterthwaite method. Produces smaller denominator deg
 
 %% Compare models
 % Run a Theoretical Likelihood Ratio Test to choose the model to use
-% [compTbl,siminfo] = compare(lme,lme2,'CheckNesting',true,'NSim',1000);
 compare(lme3,lme2,'CheckNesting',true,'NSim',1000);
 [lmecomp,siminfo] = compare(lme,lme3,'CheckNesting',true,'NSim',1000);
 
@@ -226,7 +225,7 @@ tbl = table(y,categorical(stim_site),categorical(sub_ind),...
     'VariableNames',{'ccep_val','stim_site','sub_ind'});
 
 % lme = fitlme(tbl,'ccep_val ~ 1 + stim_site + (1|sub_ind)') % with interaction
-lme = fitlme(tbl,'ccep_val ~ 1 + stim_site + (stim_site|sub_ind)') % with random slope? 
+lme = fitlme(tbl,'ccep_val ~ 1 + stim_site + (stim_site|sub_ind)') % 
 anova(lme); % perform F-test that all fixed-effects coefficients are zero
 anova(lme,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
 
