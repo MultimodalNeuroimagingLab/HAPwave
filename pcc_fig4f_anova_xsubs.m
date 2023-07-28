@@ -222,23 +222,25 @@ compare(lme3,lme2,'CheckNesting',true,'NSim',1000);
 sub_ind = [sub_ind1; sub_ind3];
 y = [pcc_hc_amp(:); pcc_amg_amp(:)];
 stim_site = [pcc_hc_stimgroup(:); pcc_amg_stimgroup(:)]; % stim group
-tblpcc = table(y,categorical(stim_site),categorical(sub_ind),...
+tbl = table(y,categorical(stim_site),categorical(sub_ind),...
     'VariableNames',{'ccep_val','stim_site','sub_ind'});
+
 % lme = fitlme(tbl,'ccep_val ~ 1 + stim_site + (1|sub_ind)') % with interaction
-lmepcc = fitlme(tbl,'ccep_val ~ 1 + stim_site + (stim_site|sub_ind)') % with random slope? 
-anova(lmepcc); % perform F-test that all fixed-effects coefficients are zero
-anova(lmepcc,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
+lme = fitlme(tbl,'ccep_val ~ 1 + stim_site + (stim_site|sub_ind)') % with random slope? 
+anova(lme); % perform F-test that all fixed-effects coefficients are zero
+anova(lme,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
 
 % now test only for ACC
 sub_ind = [sub_ind2; sub_ind4];
 y = [acc_hc_amp(:); acc_amg_amp(:)];
 stim_site = [acc_hc_stimgroup(:); acc_amg_stimgroup(:)]; % stim group
-tblacc = table(y,categorical(stim_site),categorical(sub_ind),...
+tbl = table(y,categorical(stim_site),categorical(sub_ind),...
     'VariableNames',{'ccep_val','stim_site','sub_ind'});
+
 % lmeacc = fitlme(tbl,'ccep_val ~ 1 + stim_site + (1|sub_ind)') % with interaction
-lmeacc = fitlme(tbl,'ccep_val ~ 1 + stim_site + (stim_site|sub_ind)') % with random slope? 
-anova(lmeacc); % perform F-test that all fixed-effects coefficients are zero
-anova(lmeacc,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
+lme = fitlme(tbl,'ccep_val ~ 1 + stim_site + (stim_site|sub_ind)') % with random slope? 
+anova(lme); % perform F-test that all fixed-effects coefficients are zero
+anova(lme,'DFMethod','satterthwaite') % get degrees of freedom w Satterthwaite method. Produces smaller denominator degrees of freedom and slightly larger p-values
 
 
 %% Distribution plot
