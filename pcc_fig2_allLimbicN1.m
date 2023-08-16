@@ -1,43 +1,51 @@
 clearvars, clc, close all
 
-%% Plot mean responses across subjects 
-addpath(genpath(pwd))
+%% Plot mean waveforms across subjects 
+% Dependencies: mnl_ieeg_basics, matmef, and vistasoft github repositories. 
+% See:
+% https://github.com/MultimodalNeuroimagingLab/mnl_ieegBasics 
+% https://github.com/MaxvandenBoom/matmef
+% https://github.com/vistalab/vistasoft
+
+% cd to HAPwave repo
+addpath(genpath(pwd)) 
 
 % set local path to your BIDS directory:
 myPath = setLocalDataPath(1);
 localDataPath = myPath.input;
 
-% load the meta data
-all_subjects = {'01','02','03','04','05','06','07','08'}; % 
-all_hemi = {'r','r','r','l','r','l','l','r'};
-all_runs = {'01','01','01','01','01','01','01','01'};
+% load the metadata
+all_subjects = {'01','02','03','04','05','06','07','08'};   % List of subjects
+all_hemi = {'r','r','r','l','r','l','l','r'};               % List of hemispheres
+all_runs = {'01','01','01','01','01','01','01','01'};       % List of runs
 
-% load the meta data
 for ss = 1:length(all_subjects)
     bids_sub = all_subjects{ss};
     bids_ses = 'ieeg01';
     bids_task = 'ccep';
     bids_run = all_runs{ss};
 
+    % Load metadata and stats
     [events_table,channels_table,electrodes_table,sub_out] = pcc_loadAveragesStats(localDataPath,bids_sub,bids_ses,bids_task,bids_run);
     all_out(ss) = sub_out;
 end
 
 
 %% Correct P values for number of comparisons in each subject
+% Fisrt load the limbic codes in both right and left hemis
 area_codes = {[12123 53 54 12108 12109 12110 12106 12107 59 11123 17 18 11108 11109 11110 11106 11107 10]}; % all areas
 nr_subs = length(all_subjects);
 
 for ss = 1:nr_subs  % subject loop
    
-    % Get sites that belong to the measurement ROI (rec_area)
+    % List sites that belong to the recording ROI (measured_area)
     these_measured_sites = find(ismember(all_out(ss).channel_areas,area_codes{1}));
     
-    % Get sites that belong to the stimulated ROI (stim_area)
-    these_stim_sites = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{1}) | ...
-        ismember(all_out(ss).average_ccep_areas(:,2),area_codes{1}));
+    % List sites that belong to the stimulated ROI (stim_area)
+    these_stim_sites = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{1})...
+        | ismember(all_out(ss).average_ccep_areas(:,2),area_codes{1}));
     
-    % p-values for correction of multiple comparisons
+    % prepare for correction of multiple comparisons of p-values
     all_out(ss).hasdata = NaN(size(all_out(ss).crp_out));
     all_out(ss).crp_p = NaN(size(all_out(ss).crp_out));
     all_out(ss).a_prime = NaN(size(all_out(ss).crp_out));
@@ -50,77 +58,75 @@ for ss = 1:nr_subs  % subject loop
     for kk = 1:length(these_measured_sites)
         % loop over the stimulated pairs
         for ll = 1:length(these_stim_sites)
-            if ~isempty(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).data) % ~ same stim/recording site
-                all_out(ss).hasdata(these_measured_sites(kk), these_stim_sites(ll)) = 1;
-                all_out(ss).crp_p(these_measured_sites(kk), these_stim_sites(ll)) = all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_projs.p_value_tR;
-                all_out(ss).a_prime(these_measured_sites(kk), these_stim_sites(ll)) = mean(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.al_p); % mean alpha prime across trials;
-                all_out(ss).cod(these_measured_sites(kk), these_stim_sites(ll)) = median(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.cod); % median across trials
-                sig_timepoints = find(all_out(ss).tt>0.015 & all_out(ss).tt<=all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.tR);
-                all_out(ss).avg_trace_tR(these_measured_sites(kk), these_stim_sites(ll),sig_timepoints) = all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.C;
-
+            if ~isempty(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).data)   % we have CRPs
+                all_out(ss).hasdata(these_measured_sites(kk), these_stim_sites(ll)) = 1;            % is significant
+                all_out(ss).crp_p(these_measured_sites(kk), these_stim_sites(ll)) = all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_projs.p_value_tR;   % p-value
+                all_out(ss).a_prime(these_measured_sites(kk), these_stim_sites(ll)) = mean(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.al_p); % mean 
+                all_out(ss).cod(these_measured_sites(kk), these_stim_sites(ll)) = median(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.cod);    % CRP coefficent of determination
+                sig_timepoints = find(all_out(ss).tt>0.015 & all_out(ss).tt<=all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.tR);                 % response duration
+                all_out(ss).avg_trace_tR(these_measured_sites(kk), these_stim_sites(ll),sig_timepoints) = all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.C; % al_p for tR
             else
-                all_out(ss).hasdata(these_measured_sites(kk), these_stim_sites(ll)) = 0;
+                all_out(ss).hasdata(these_measured_sites(kk), these_stim_sites(ll)) = 0;            % is not significant
             end
         end
     end
-    pvals = all_out(ss).crp_p(all_out(ss).hasdata==1);
-    qq = 0.05;
-    [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'dep','no');
-    all_out(ss).crp_p_adj(all_out(ss).hasdata==1) = adj_p;
-    all_out(ss).h(all_out(ss).hasdata==1) = h;
+    pvals = all_out(ss).crp_p(all_out(ss).hasdata==1);  % get pVals
+    qq = 0.05; % false discovery rate
+    [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'dep','no'); % Benjamini & Yekutieli FDR correction 
+    all_out(ss).crp_p_adj(all_out(ss).hasdata==1) = adj_p; % Adjusted pVals
+    all_out(ss).h(all_out(ss).hasdata==1) = h; % adjusted pVal is significant
 end
 
-%% Load stim and measure areas across subjects
-set_color = {[0 0.4470 0.7410],[0.8500 0.3250 0.0980],[0.4660 0.6740 0.1880],[0.4940 0.1840 0.5560],[0.9290 0.6940 0.1250],[0.3010 0.7450 0.9330],[0.6350 0.0780 0.1840]};
-% blue, orange, green, purple, mustard, celeste, wine
-
-% changes to the following:
+%% Load stim and measure sites and find N1 responses
+% Sort limbic codes by hemisphere
 area_names = {'Hipp','Amyg','PCC','ACC'};   
 area_codes_r = {[12123 53],[54],[12108 12109 12110],[12106 12107]}; % right
 area_codes_l = {[11123 17],[18],[11108 11109 11110],[11106 11107]}; % left
 
 out = []; % this will be a area X area structure, with all subjects concatinates for each area
 
-subj_resp_total = zeros(nr_subs,1);               % stim-->measured pair for stats FDR correction
+subj_resp_total = zeros(nr_subs,1); % stim-->measured pair for adjusted FDR
 
 t_win_norm = [0.015 0.500]; % window for vector length normalization and plotting across subjects
 
-for measure_ind = 1:length(area_codes_r) % loop through the inds 
-    for stim_ind = 1:length(area_codes_r)
+for measure_ind = 1:length(area_names) % loop through measured sites
+    for stim_ind = 1:length(area_names) % now go through stimulated sites
 
         resp_counter = 0; % counting all responses across subjects for this connection
 
-        for ss = 1:nr_subs % subject loop
+        for ss = 1:nr_subs % loop through subjects
+            % which hemisphere has coverage
             if isequal(all_hemi{ss},'l')
                 area_codes = area_codes_l;
             elseif isequal(all_hemi{ss},'r')
                 area_codes = area_codes_r;
             end
 
-            % Get sites that belong to the measurement ROI (rec_area)
+            % Get recording ROI (measured_area)
+%             these_measured_sites = find(ismember(all_out(ss).channel_areas,area_codes{1}));
             these_measured_sites = find(ismember(all_out(ss).channel_areas,area_codes{measure_ind}));
-            
-            % Get sites that belong to the stimulated ROI (stim_area)
+            % Get stimulated ROI (stim_area)
+%             these_stim_sites = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{1})...
+%                 | ismember(all_out(ss).average_ccep_areas(:,2),area_codes{1}));
             these_stim_sites = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{stim_ind}) | ...
                 ismember(all_out(ss).average_ccep_areas(:,2),area_codes{stim_ind}));
-            
+
             % loop over measured sites
             for kk = 1:length(these_measured_sites)
                 % loop over the stimulated pairs
                 for ll = 1:length(these_stim_sites)
-                    if ~isempty(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).data) % ~ same stim/recording site
+                    if ~isempty(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).data) 
                         
-                        % this is a pair, counting for multiple comparison
-                        % correction per subject
+                        % this is a pair, counting for multiple comparison correction per subject
                         subj_resp_total(ss) = subj_resp_total(ss) + 1; % set counter
                         
                         % first raw responses
                         plot_responses = squeeze(all_out(ss).average_ccep(these_measured_sites(kk), these_stim_sites(ll), :));
-                        tt = all_out(ss).tt;
+%                         tt = all_out(ss).tt;
 
                         % Is there an N1?
-                        params.amplitude_thresh = 3.4;% standard deviations 3.4;
-                        params.n1_peak_range = 0.050; %in s
+                        params.amplitude_thresh = 3.4;  % standard deviations 3.4;
+                        params.n1_peak_range = 0.050;   % in s
                         params.baseline_tt = tt>-.5 & tt<-.020;
                         params.peakSign = 1;
                         % amplitudeThresh is in microvolts, used if standard devisation from baseline is smaller than this value 
@@ -134,20 +140,20 @@ for measure_ind = 1:length(area_codes_r) % loop through the inds
                         
                         % Keep earliest peak
                         if ~isnan(posn1_peak_time) && ~isnan(negn1_peak_time) % if both positive and negative
-                            if posn1_peak_time < negn1_peak_time % positive is earlier
+                            if posn1_peak_time < negn1_peak_time        % positive is earlier
                                 n1_peak_amplitude = posn1_peak_amplitude;
                                 n1_peak_time = posn1_peak_time;
                                 n1_peak_sample = posn1_peak_sample;
-                            elseif negn1_peak_time < posn1_peak_time
+                            elseif negn1_peak_time < posn1_peak_time    % negative is earlier
                                 n1_peak_amplitude = negn1_peak_amplitude;
                                 n1_peak_time = negn1_peak_time;
                                 n1_peak_sample = negn1_peak_sample;
                             end
-                        elseif ~isnan(posn1_peak_time) && isnan(negn1_peak_time)
+                        elseif ~isnan(posn1_peak_time) && isnan(negn1_peak_time) % positive peak
                             n1_peak_amplitude = posn1_peak_amplitude;
                             n1_peak_time = posn1_peak_time;
                             n1_peak_sample = posn1_peak_sample;
-                        elseif ~isnan(negn1_peak_time) && isnan(posn1_peak_time)
+                        elseif ~isnan(negn1_peak_time) && isnan(posn1_peak_time) % negative peak
                             n1_peak_amplitude = negn1_peak_amplitude;
                             n1_peak_time = negn1_peak_time;
                             n1_peak_sample = negn1_peak_sample;
@@ -158,8 +164,7 @@ for measure_ind = 1:length(area_codes_r) % loop through the inds
                         end
                         % save outputs
                         resp_counter = resp_counter + 1;
-
-                        % get N1 responses
+                        % get N1 params
                         out(measure_ind,stim_ind).n1ampl(resp_counter, :) = n1_peak_amplitude;
                         out(measure_ind,stim_ind).n1time(resp_counter, :) = n1_peak_time;
                         out(measure_ind,stim_ind).n1sample(resp_counter, :) = n1_peak_sample;
@@ -169,53 +174,53 @@ for measure_ind = 1:length(area_codes_r) % loop through the inds
                         % unit length taken in same window as stats
                         response_vector_length = sum(plot_responses(all_out(ss).tt > t_win_norm(1) &  all_out(ss).tt < t_win_norm(2)) .^ 2) .^ .5;
                         plot_responses_norm = plot_responses ./ (response_vector_length*ones(size(plot_responses))); % normalize (L2 norm) each trial
+                       
                         out(measure_ind,stim_ind).plot_responses_norm(resp_counter, :) = plot_responses_norm;
-                        
-                        % store subject index
+                        out(measure_ind,stim_ind).plot_responses(resp_counter, :) = plot_responses;
+                        out(measure_ind,stim_ind).C(resp_counter, :) = squeeze(all_out(ss).avg_trace_tR(these_measured_sites(kk), these_stim_sites(ll), :));
+
+                        % save subject index
                         out(measure_ind,stim_ind).subj_ind(resp_counter, :) = ss;
                         
-                        % save CRP stuff for 
+                        % save CRP stuff one layer out 
                         out(measure_ind,stim_ind).p(resp_counter, :) = all_out(ss).crp_p_adj(these_measured_sites(kk), these_stim_sites(ll));
                         out(measure_ind,stim_ind).cod(resp_counter, :) = all_out(ss).cod(these_measured_sites(kk), these_stim_sites(ll)); 
                         out(measure_ind,stim_ind).a_prime(resp_counter, :) = all_out(ss).a_prime(these_measured_sites(kk), these_stim_sites(ll)); 
                     end
-                end % done looping through stim pairs
-            end  % done looping through measured electrode
-
-        end % done subject loop
+                end 
+            end  
+        end 
     end 
 end
 
 
-%% plot CCEPs with N1 in dots and std error 
- 
-tt = all_out(1).tt;
-
+%% plot CCEPs and std error, with N1s + sig CRPs detected
+% prepare to plot
 figure('Position',[0 0 1000 800]), hold on
-for measure_ind = 1:length(area_codes)
-    for stim_ind = 1:length(area_codes)
+for measure_ind = 1:length(area_codes)      % loop over measured sites
+    for stim_ind = 1:length(area_codes)     % loop over stimulated sites
         subplot(length(area_codes), length(area_codes), (measure_ind-1) * length(area_codes) + stim_ind),hold on
         
-        sign_resp = out(measure_ind,stim_ind).p<0.05; % adjusted for multiple comparisons
-       
+        sign_resp = out(measure_ind,stim_ind).p < 0.05; % adjusted for multiple comparisons
+
         this_set = out(measure_ind,stim_ind).plot_responses_norm(sign_resp==1,:)';        
 
 %         Plot all response, mean and confidence interval
-%         plot(tt,this_set,'color',[.5 .5 .5 .2])                   % just plot all responses
-        plot(tt,mean(this_set,2), 'color','k', 'LineWidth',1)       % plot mean of all responses
-        plot(tt(tt>.015 & tt<1),zeros(size(tt(tt>.015 & tt<1))),'k:') % plot zero line
-        plotCurvConf(tt, this_set');                                % plots 95% Confidende interval in gray with 50% transparency
-        
-        % if a significant N1, plot it
-        for kk = 1:length(sign_resp) % adjusted for multiple comparisons
-            if sign_resp(kk)==1 % significant CRP
+%         plot(tt,this_set,'color',[.5 .5 .5 .2])                         % just plot all responses
+        plot(tt,mean(this_set,2), 'color','k', 'LineWidth',1)           % plot mean of all responses
+        plot(tt(tt>.015 & tt<1), zeros(size(tt(tt>.015 & tt<1))),'k:')  % plot zero line
+        plotCurvConf(tt, this_set',[],'0.5');                                    % plots 95% Confidende interval in gray with 50% transparency
+       
+%         % if a significant N1, plot a dot
+%         for kk = 1:length(sign_resp) % adjusted for multiple comparisons
+%             if sign_resp(kk)==1 % significant CRP
 %                 if ~isnan(out(measure_ind,stim_ind).n1ampl(kk)) % found and N1 (pos or neg)
 %                     plot(tt(out(measure_ind,stim_ind).n1sample(kk)),... 
 %                         out(measure_ind,stim_ind).plot_responses_norm(kk,out(measure_ind,stim_ind).n1sample(kk)),...
 %                         'r.')
 %                 end
-            end
-        end
+%             end
+%         end
               
         xlim([0 1]),ylim([-0.08 0.08])
         title(['stim:' area_names{stim_ind} ' rec:' area_names{measure_ind} ])

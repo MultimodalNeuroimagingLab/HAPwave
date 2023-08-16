@@ -3,18 +3,22 @@ clearvars, close all, clc
 % startup
 
 %% Get stats across subs
-% Dependencies: Mnl ieeg basics, matmef, & vistasoft repositories
+% Dependencies: mnl_ieeg_basics & Van den Boom matmef github repositories. 
+% See:
+% https://github.com/MultimodalNeuroimagingLab/mnl_ieegBasics 
+% https://github.com/MaxvandenBoom/matmef
 
-addpath(genpath(pwd));
+% cd to HAPwave repo
+addpath(genpath(pwd)) 
 
 % set local path to your BIDS directory:
 myPath = setLocalDataPath(1);
 localDataPath = myPath.input;
 
 % load the meta data
-all_subjects = {'01','02','03','04','05','06','07','08'};
-all_hemi = {'r','r','r','l','r','l','l','r'};
-all_runs = {'01','01','01','01','01','01','01','01'};
+all_subjects = {'01','02','03','04','05','06','07','08'};   % List of subjects
+all_hemi = {'r','r','r','l','r','l','l','r'};               % List of hemispheres
+all_runs = {'01','01','01','01','01','01','01','01'};       % List of runs
 
 for ss = 1:length(all_subjects)
     bids_sub = all_subjects{ss};
@@ -32,30 +36,30 @@ for ss = 1:length(all_subjects)
     electrodes_tsv_name = fullfile(localDataPath,['sub-' bids_sub],['ses-' bids_ses],'ieeg',...
         ['sub-' bids_sub '_ses-' bids_ses '_electrodes.tsv']);
 
-    % load events, channels and electrodes
-    [metadata] = readMef3(fileName); % metadata table
+    % load events, channels, electrodes and metadata
     events_table = readtable(events_tsv_name,'FileType','text','Delimiter','\t','TreatAsEmpty',{'N/A','n/a'}); % events table
     channels_table = readtable(channels_tsv_name,'FileType','text','Delimiter','\t','TreatAsEmpty',{'N/A','n/a'}); % channels table
     electrodes_table = readtable(electrodes_tsv_name,'FileType','text','Delimiter','\t','TreatAsEmpty',{'N/A','n/a'}); % electrodes table
-
+    [metadata] = readMef3(fileName); % metadata table
     % --------------------------------------------------------------------
     % get necessary parameters from data
-    srate = metadata.time_series_metadata.section_2.sampling_frequency;  % sampling frequency
-    nr_channels = length(metadata.time_series_channels); % number of channels
+    srate = metadata.time_series_metadata.section_2.sampling_frequency; % sampling frequency
+    nr_channels = length(metadata.time_series_channels);                % number of channels
     % list of channel names
     channel_names = cell(nr_channels,1);
     for kk = 1:nr_channels
         channel_names{kk} = metadata.time_series_channels(kk).name;
     end
-    % find good sEEG/ECoG channels
+    % find good sEEG channels
     good_channels = find(ismember(channels_table.type,{'ECOG','SEEG'}) & ismember(channels_table.status,'good'));
-    
 
     % load event data, clip other stim amplitudes
-    events_table_clipped = bids_clipEvents(events_table,'electrical_stimulation_current', {'4.0 mA', '6.0 mA'}); % keep only events with stim current == 4.0 or 6.0 mA
+    events_table_clipped = bids_clipEvents(events_table,...
+        'electrical_stimulation_current', {'4.0 mA', '6.0 mA'}); % keep only events with stim current == 4.0 or 6.0 mA
 
     % see which stim pairs are in areas of interest
     areas_interest = [17 18 11106 11107 11108 11109 11110 11123 10 53 54 12106 12107 12108 12109 12110 12123 49]; % Destrieux_label
+   
     % get areas fo each channel name and each ccep stim pair name
     channel_names = channels_table.name;
     channel_areas = zeros(size(channel_names));
@@ -88,7 +92,8 @@ for ss = 1:length(all_subjects)
     % only keep events where we stimulated the limbic network
     ccep_stim_areas_limbic = ccep_stim_areas(sum(ccep_stim_areas,2)>0,:);
     ccep_stim_names_limbic = ccep_stim_names(sum(ccep_stim_areas,2)>0,:);
-    events_table_clipped = bids_clipEvents(events_table_clipped,'electrical_stimulation_site', ccep_stim_names_limbic); % keep only events with stim current == 4.0 or 6.0 mA
+    events_table_clipped = bids_clipEvents(events_table_clipped,...
+        'electrical_stimulation_site', ccep_stim_names_limbic); % include only limbic sites
 
     % remove events if less than 4 of the same type
     remove_stim_pair = {};
@@ -101,21 +106,22 @@ for ss = 1:length(all_subjects)
     end
     events_table_clipped(ismember(events_table_clipped.electrical_stimulation_site,remove_stim_pair),:) = [];
 
-    % stuff
+    % set parameters for preprocessing
     baseline_t = [-0.5 -0.05]; 
     t_win_crp = [0.015 1];
+    
     % only calculate stats for channel_areas>0
     [average_ccep,average_ccep_names,tt,srate,crp_out] = ...
         ccepPCC_loadAverageSubset(fileName,events_table_clipped,good_channels, channel_areas, baseline_t,t_win_crp,1);
     
     % now get stim areas, incorrect order:
-    [~,x_ind] = ismember(average_ccep_names,ccep_stim_names_limbic); % indiced into stim_names from ccep_names
+    [~,x_ind] = ismember(average_ccep_names,ccep_stim_names_limbic);    % indiced into stim_names from ccep_names
     average_ccep_areas = ccep_stim_areas_limbic(x_ind,:);
-    clear ccep_stim_areas_limbic ccep_stim_names_limbic % these were only used to clip the events table, not for computations
+    clear ccep_stim_areas_limbic ccep_stim_names_limbic                 % these were only used to clip the events table, not for computations
 
-    outputName = fullfile(localDataPath,'derivatives','stats',['sub-' bids_sub],...
+    statsFile = fullfile(localDataPath,'derivatives','stats',['sub-' bids_sub],...
         ['sub-' bids_sub '_ses-' bids_ses '_task-' bids_task '_run-' bids_run '_crp.mat']);
-    save(outputName,'average_ccep','average_ccep_names','average_ccep_areas','tt','srate','crp_out','channel_names','channel_areas');
+    save(statsFile,'average_ccep','average_ccep_names','average_ccep_areas','tt','srate','crp_out','channel_names','channel_areas');
     clear average_ccep average_ccep_names tt srate crp_out
     disp(['sub ' bids_sub ' stats saved'])
 end
