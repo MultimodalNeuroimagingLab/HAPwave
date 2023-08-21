@@ -2,11 +2,6 @@ clearvars, clc, close all
 
 %% Plot mean waveforms across subjects 
 % Dependencies: mnl_ieeg_basics, matmef, and vistasoft github repositories. 
-% See:
-% https://github.com/MultimodalNeuroimagingLab/mnl_ieegBasics 
-% https://github.com/MaxvandenBoom/matmef
-% https://github.com/vistalab/vistasoft
-
 % cd to HAPwave repo
 addpath(genpath(pwd)) 
 
@@ -88,13 +83,14 @@ out = []; % this will be a area X area structure, with all subjects concatinates
 subj_resp_total = zeros(nr_subs,1); % stim-->measured pair for adjusted FDR
 
 t_win_norm = [0.015 0.500]; % window for vector length normalization and plotting across subjects
+tt = all_out(ss).tt;
 
 for measure_ind = 1:length(area_names) % loop through measured sites
     for stim_ind = 1:length(area_names) % now go through stimulated sites
 
         resp_counter = 0; % counting all responses across subjects for this connection
 
-        for ss = 1:nr_subs % loop through subjects
+        for ss = 1:nr_subs % loop over subjects
             % which hemisphere has coverage
             if isequal(all_hemi{ss},'l')
                 area_codes = area_codes_l;
@@ -103,11 +99,9 @@ for measure_ind = 1:length(area_names) % loop through measured sites
             end
 
             % Get recording ROI (measured_area)
-%             these_measured_sites = find(ismember(all_out(ss).channel_areas,area_codes{1}));
             these_measured_sites = find(ismember(all_out(ss).channel_areas,area_codes{measure_ind}));
+           
             % Get stimulated ROI (stim_area)
-%             these_stim_sites = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{1})...
-%                 | ismember(all_out(ss).average_ccep_areas(:,2),area_codes{1}));
             these_stim_sites = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{stim_ind}) | ...
                 ismember(all_out(ss).average_ccep_areas(:,2),area_codes{stim_ind}));
 
@@ -122,7 +116,6 @@ for measure_ind = 1:length(area_names) % loop through measured sites
                         
                         % first raw responses
                         plot_responses = squeeze(all_out(ss).average_ccep(these_measured_sites(kk), these_stim_sites(ll), :));
-%                         tt = all_out(ss).tt;
 
                         % Is there an N1?
                         params.amplitude_thresh = 3.4;  % standard deviations 3.4;
@@ -176,8 +169,6 @@ for measure_ind = 1:length(area_names) % loop through measured sites
                         plot_responses_norm = plot_responses ./ (response_vector_length*ones(size(plot_responses))); % normalize (L2 norm) each trial
                        
                         out(measure_ind,stim_ind).plot_responses_norm(resp_counter, :) = plot_responses_norm;
-                        out(measure_ind,stim_ind).plot_responses(resp_counter, :) = plot_responses;
-                        out(measure_ind,stim_ind).C(resp_counter, :) = squeeze(all_out(ss).avg_trace_tR(these_measured_sites(kk), these_stim_sites(ll), :));
 
                         % save subject index
                         out(measure_ind,stim_ind).subj_ind(resp_counter, :) = ss;
