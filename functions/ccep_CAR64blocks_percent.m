@@ -77,19 +77,6 @@ for ss = set_nrs % run across blocks
     % subtract from all other data
     signaldata(out(ss).channels_set,:,:) = signaldata(out(ss).channels_set,:,:) - repmat(out(ss).car_data,length(out(ss).channels_set),1,1);
     
-    % Regress car from all channels?
-    % we don't like this, because the regression weight is highly dependent on
-    % the stimulation artifact, simple subtraction seems better suited in
-    % CCEP case
-%     for ii_chan = 1:length(out(ss).channels_set)
-%         for ii_epoch = 1:size(signaldata,3)
-%             data = squeeze(signaldata(out(ss).channels_set(ii_chan),:,ii_epoch))';
-%             car_sig = out(ss).car_data(:,:,ii_epoch)';
-%             [~,~,R] = regress(data,car_sig);
-%             signaldata(out(ss).channels_set(ii_chan),:,ii_epoch) = R;
-%         end
-%     end
-
 end
 
 

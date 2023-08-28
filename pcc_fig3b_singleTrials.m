@@ -45,7 +45,7 @@ for ss = 1:length(all_subjects)
         channel_names{kk} = metadata.time_series_channels(kk).name;
     end
     % find good sEEG/ECoG channels
-    good_channels = find(ismember(channels_table.type,{'ECOG','SEEG'}) & ismember(channels_table.status,'good'));
+    good_channels = find(ismember(channels_table.type,{'SEEG'}) & ismember(channels_table.status,'good'));
 
     % load event data, clip other stim amplitudes
     events_table_clipped = bids_clipEvents(events_table,'electrical_stimulation_current', {'4.0 mA', '6.0 mA'}); % keep only events with stim current == 4.0 or 6.0 mA
@@ -106,8 +106,9 @@ for kk = 1:length(el_stim)
     baseline_t = [-0.5 -0.05];
     t_win_crp = [0.015 1];
     % CAR
-    [average_ccep,average_ccep_names,tt,srate,crp_out,single_trials] = ...
-        ccepPCC_loadAverageSubset(out(ss).fileName,events_table_thisSite,out(ss).good_channels, out(ss).channel_areas, baseline_t,t_win_crp,1,1);
+    [average_ccep, average_ccep_names, tt, srate, crp_out, single_trials] = ...
+        ccepPCC_loadAverageSubset(out(ss).fileName, events_table_thisSite, ...
+        out(ss).good_channels, out(ss).channel_areas, baseline_t, t_win_crp, 1, 1);
 
     chan_ind = find(ismember(out(ss).channel_names,el_record));
 
@@ -123,11 +124,9 @@ for kk = 1:length(el_stim)
     xlabel('Time(s)'), xlim([-.2 2]);
     ylabel('Voltage (uV)'),ylim([-500 1000]);
 end
-%%
-fname = fullfile(fname = fullfile(localDataPath,'derivatives','matlabOut','fig3','s8_PCCsingleTrials')
-kjm_printfig(fname,[6 6])
-%%
-%%
+
+
+%% --------------------------------------------------
 %% Plot single trials for Sub-08
 ss = 8;
 el_stim = {'RC1-RC2'}; % stim site with 55 trials
@@ -139,11 +138,11 @@ events_table_thisSite = bids_clipEvents(out(ss).events_table_clipped,'electrical
 baseline_t = [-0.5 -0.05];
 t_win_crp = [0.015 1];
 % load and preprocess data
-[average_ccep,average_ccep_names,tt,srate,crp_out,single_trials] = ...
-    ccepPCC_loadAverageSubset(out(ss).fileName, events_table_thisSite, out(ss).good_channels, out(ss).channel_areas, baseline_t, t_win_crp,1,1);
+[average_ccep, average_ccep_names, tt, srate, crp_out, single_trials] = ...
+    ccepPCC_loadAverageSubset(out(ss).fileName, events_table_thisSite, ...
+    out(ss).good_channels, out(ss).channel_areas, baseline_t, t_win_crp, 1, 1);
 
 figure('Position',[0 0 550 800]), hold on;
-
 for kk = 1:length(el_record)
     chan_ind = find(ismember(out(ss).channel_names,el_record{kk}));
 
@@ -152,14 +151,10 @@ for kk = 1:length(el_record)
     % plot single and average responses
     subplot(3,1,kk), hold on
     plot(tt(tt >0.010 & tt <2),zeros(size(tt(tt >0.010 & tt <2))),'k:') % plot zero line
-    plot(tt,plot_responses,'Color',[.7 .7 .7 .3]) % single responses in gray
-    plot(tt,mean(plot_responses),'k','LineWidth',1.5) % mean in thicker black line
+    plot(tt,plot_responses,'Color',[.7 .7 .7 .3])                       % single responses in gray
+    plot(tt,mean(plot_responses),'k','LineWidth',1.5)                   % mean in thicker black line
 
     % set axis and labels
     xlabel('Time(s)'), xlim([-.2 2]);
     ylabel('Voltage (uV)'),ylim([-500 1000]);
 end
-
-%% save 
-fname = fullfile(localDataPath,'derivatives','matlabOut','fig3','s8_PCCsingleTrials');
-kjm_printfig(fname,[6 6])
