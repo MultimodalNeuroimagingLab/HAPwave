@@ -11,7 +11,6 @@ This data is organized according to the Brain Imaging Data Structure specificati
 # Dependencies
 This code is dependent on the following packages:
 - [MatMef](https://github.com/MaxvandenBoom/matmef)
-- [MNL_ieegbasics](https://github.com/MultimodalNeuroimagingLab/mnl_ieegBasics)
 - [Vistasoft](https://github.com/vistalab/vistasoft)
 
 # How to run
