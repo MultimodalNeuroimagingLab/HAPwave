@@ -6,14 +6,14 @@
 addpath(genpath(pwd))
 
 % set local path to your BIDS directory:
-myPath = setLocalDataPath(1);
-localDataPath = myPath.input;
+myPath          = setLocalDataPath(1);
+localDataPath   = myPath.input;
 
-bids_subjects = {'01','02','03','04','05','06','07','08'};
+bids_subjects   = {'01','02','03','04','05','06','07','08'};
 
 for ss = 1:length(bids_subjects)
-    bids_sub = bids_subjects{ss};
-    bids_ses = 'ieeg01';
+    bids_sub    = bids_subjects{ss};
+    bids_ses    = 'ieeg01';
 
     if isequal(bids_sub,'01')
         elsPCC_set = {'RY1','RY2','RQ1','RZ1'}; % super, deep, super, deep 
@@ -39,23 +39,21 @@ for ss = 1:length(bids_subjects)
     elseif isequal(bids_sub,'08')
         elsPCC_set = {'RZ1','RPO1','RQ1'};
         elsACC_set = {'RX1','RX2','RF6','RF7'};
-    end
-    
+    end    
     
     % get electrode positions matrix
     electrodes_tsv_name = fullfile(localDataPath,['sub-' bids_sub],['ses-' bids_ses],'ieeg',...
         ['sub-' bids_sub '_ses-' bids_ses '_electrodes.tsv']);
-%         ['sub-' bids_sub '_ses-' bids_ses '_task-ccep_electrodes_sorted.tsv']);
-    loc_info = readtable(electrodes_tsv_name,'FileType','text','Delimiter','\t','TreatAsEmpty',{'N/A','n/a'});
+    loc_info            = readtable(electrodes_tsv_name,'FileType','text','Delimiter','\t','TreatAsEmpty',{'N/A','n/a'});
     
     % load pial and gray/white surfaces
-    gL_pial = gifti(fullfile(localDataPath,'derivatives','freesurfer',['sub-' bids_sub],'pial.L.surf.gii'));
-    gR_pial = gifti(fullfile(localDataPath,'derivatives','freesurfer',['sub-' bids_sub],'pial.R.surf.gii'));
-    gL_white = gifti(fullfile(localDataPath,'derivatives','freesurfer',['sub-' bids_sub],'white.L.surf.gii'));
-    gR_white = gifti(fullfile(localDataPath,'derivatives','freesurfer',['sub-' bids_sub],'white.R.surf.gii'));
+    gL_pial     = gifti(fullfile(localDataPath,'derivatives','freesurfer',['sub-' bids_sub],'pial.L.surf.gii'));
+    gR_pial     = gifti(fullfile(localDataPath,'derivatives','freesurfer',['sub-' bids_sub],'pial.R.surf.gii'));
+    gL_white    = gifti(fullfile(localDataPath,'derivatives','freesurfer',['sub-' bids_sub],'white.L.surf.gii'));
+    gR_white    = gifti(fullfile(localDataPath,'derivatives','freesurfer',['sub-' bids_sub],'white.R.surf.gii'));
     
-    distLim = 6;
-    [out] = ieeg_eldist2pial2white(loc_info,gL_pial,gR_pial,gL_white,gR_white, distLim);
+    distLim     = 6; % set distance limit
+    [out]       = ieeg_eldist2pial2white(loc_info,gL_pial,gR_pial,gL_white,gR_white, distLim);
 
     for kk = 1:length(els_set)
         this_ind = find(ismember(out.name,els_set{kk}));

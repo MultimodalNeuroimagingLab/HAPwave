@@ -4,20 +4,20 @@ clearvars, clc, close all
 addpath(genpath(pwd));
 
 % set local path to your BIDS directory:
-myPath = setLocalDataPath(1);
-localDataPath = myPath.input;
+myPath          = setLocalDataPath(1);
+localDataPath   = myPath.input;
 
 % load the metadata across subjects
-all_subjects = {'01','02','03','04','05','06','07','08'};
-all_hemi = {'r','r','r','l','r','l','l','r'};
-all_runs = {'01','01','01','01','01','01','01','01'};
+all_subjects    = {'01','02','03','04','05','06','07','08'};
+all_hemi        = {'r','r','r','l','r','l','l','r'};
+all_runs        = {'01','01','01','01','01','01','01','01'};
 
-out = []; % prepare to concatinate across subjects
-for ss = 1:length(all_subjects)
-    bids_sub = all_subjects{ss};
-    bids_ses = 'ieeg01';
-    bids_task = 'ccep';
-    bids_run = all_runs{ss};
+out             = []; % prepare to concatinate outputs across subjects
+for ss              = 1:length(all_subjects)
+    bids_sub        = all_subjects{ss};
+    bids_ses        = 'ieeg01';
+    bids_task       = 'ccep';
+    bids_run        = all_runs{ss};
 
     % set var names: mefd, events, channels and electrodes
     fileName = fullfile(localDataPath,['sub-' bids_sub],['ses-' bids_ses],'ieeg',...
@@ -29,34 +29,36 @@ for ss = 1:length(all_subjects)
     electrodes_tsv_name = fullfile(localDataPath,['sub-' bids_sub],['ses-' bids_ses],'ieeg',...
         ['sub-' bids_sub '_ses-' bids_ses '_electrodes.tsv']);
 
-    % load events, channels and electrodes
-    [metadata] = readMef3(fileName); % metadata table
-    events_table = readtable(events_tsv_name,'FileType','text','Delimiter','\t','TreatAsEmpty',{'N/A','n/a'}); % events table
-    channels_table = readtable(channels_tsv_name,'FileType','text','Delimiter','\t','TreatAsEmpty',{'N/A','n/a'}); % channels table
-    electrodes_table = readtable(electrodes_tsv_name,'FileType','text','Delimiter','\t','TreatAsEmpty',{'N/A','n/a'}); % electrodes table
+    % load metadata, events, channels, and electrodes
+    [metadata]      = readMef3(fileName); % metadata table
+    events_table    = readtable(events_tsv_name,'FileType','text','Delimiter','\t','TreatAsEmpty',{'N/A','n/a'}); % events table
+    channels_table  = readtable(channels_tsv_name,'FileType','text','Delimiter','\t','TreatAsEmpty',{'N/A','n/a'}); % channels table
+    electrodes_table= readtable(electrodes_tsv_name,'FileType','text','Delimiter','\t','TreatAsEmpty',{'N/A','n/a'}); % electrodes table
 
-    % --------------------------------------------------------------------
+    % ------------------------------------------------------------------- %
     % get necessary parameters from data
-    srate = metadata.time_series_metadata.section_2.sampling_frequency;  % sampling frequency
-    nr_channels = length(metadata.time_series_channels); % number of channels
+    srate               = metadata.time_series_metadata.section_2.sampling_frequency;  % sampling frequency
+    nr_channels         = length(metadata.time_series_channels);        % number of channels
+    
     % list of channel names
-    channel_names = cell(nr_channels,1);
+    channel_names       = cell(nr_channels,1);
     for kk = 1:nr_channels
         channel_names{kk} = metadata.time_series_channels(kk).name;
     end
+    
     % find good sEEG/ECoG channels
-    good_channels = find(ismember(channels_table.type,{'SEEG'}) & ismember(channels_table.status,'good'));
+    good_channels       = find(ismember(channels_table.type,{'SEEG'}) & ismember(channels_table.status,'good'));
 
-    % load event data, clip other stim amplitudes
+    % load event data, clip out other stim amplitudes
     events_table_clipped = bids_clipEvents(events_table,'electrical_stimulation_current', {'4.0 mA', '6.0 mA'}); % keep only events with stim current == 4.0 or 6.0 mA
 
     % see which stim pairs are in areas of interest
-    areas_interest = [17 18 11106 11107 11108 11109 11110 11123 10 53 54 12106 12107 12108 12109 12110 12123 49]; % Destrieux_label
+    areas_interest      = [17 18 11106 11107 11108 11109 11110 11123 10 53 54 12106 12107 12108 12109 12110 12123 49]; % Destrieux_label
     % get areas fo each channel name and each ccep stim pair name
-    channel_names = channels_table.name;
-    channel_areas = zeros(size(channel_names));
-    ccep_stim_names = unique(events_table_clipped.electrical_stimulation_site);
-    ccep_stim_areas = zeros(length(ccep_stim_names),2);
+    channel_names       = channels_table.name;
+    channel_areas       = zeros(size(channel_names));
+    ccep_stim_names     = unique(events_table_clipped.electrical_stimulation_site);
+    ccep_stim_areas     = zeros(length(ccep_stim_names),2);
 
     % loop through channel names to get channel areas
     for kk = 1:length(channel_names)
@@ -69,50 +71,50 @@ for ss = 1:length(all_subjects)
 
     % get areas for each stim pair name
     for kk = 1:length(ccep_stim_names)
-        if sum(ismember(ccep_stim_names{kk},'-'))==1 % 1 -
-            ccep_stim_areas(kk,1) = channel_areas(ismember(channel_names,extractBefore(ccep_stim_names{kk},'-')));
-            ccep_stim_areas(kk,2) = channel_areas(ismember(channel_names,extractAfter(ccep_stim_names{kk},'-')));
+        if sum(ismember(ccep_stim_names{kk},'-'))==1 
+            ccep_stim_areas(kk,1)   = channel_areas(ismember(channel_names,extractBefore(ccep_stim_names{kk},'-')));
+            ccep_stim_areas(kk,2)   = channel_areas(ismember(channel_names,extractAfter(ccep_stim_names{kk},'-')));
         else % assume the second - if there is a - in the channel name
-            dash_in_name = find(ismember(ccep_stim_names{kk},'-'));
-            el1_name = ccep_stim_names{kk}(1:dash_in_name(2)-1);
-            el2_name = ccep_stim_names{kk}(dash_in_name(2)+1:end);
-            ccep_stim_areas(kk,1) = channel_areas(ismember(channel_names,el1_name));
-            ccep_stim_areas(kk,2) = channel_areas(ismember(channel_names,el2_name));
+            dash_in_name            = find(ismember(ccep_stim_names{kk},'-'));
+            el1_name                = ccep_stim_names{kk}(1:dash_in_name(2)-1);
+            el2_name                = ccep_stim_names{kk}(dash_in_name(2)+1:end);
+            ccep_stim_areas(kk,1)   = channel_areas(ismember(channel_names,el1_name));
+            ccep_stim_areas(kk,2)   = channel_areas(ismember(channel_names,el2_name));
         end
     end
 
     % save filename, channel areas and good channels
-    out(ss).fileName = fileName;
-    out(ss).channel_names = channel_names;
-    out(ss).channel_areas = channel_areas;
-    out(ss).good_channels = good_channels;
+    out(ss).fileName        = fileName;
+    out(ss).channel_names   = channel_names;
+    out(ss).channel_areas   = channel_areas;
+    out(ss).good_channels   = good_channels;
 
     % only keep events where we stimulated the limbic network
-    out(ss).ccep_stim_areas_limbic = ccep_stim_areas(sum(ccep_stim_areas,2) > 0,:);
-    out(ss).ccep_stim_names_limbic = ccep_stim_names(sum(ccep_stim_areas,2)>0,:);
-    out(ss).events_table_clipped = bids_clipEvents(events_table_clipped,'electrical_stimulation_site', ccep_stim_names(sum(ccep_stim_areas,2)>0,:)); % keep only events with stim current == 4.0 or 6.0 mA
+    out(ss).ccep_stim_areas_limbic  = ccep_stim_areas(sum(ccep_stim_areas,2) > 0,:);
+    out(ss).ccep_stim_names_limbic  = ccep_stim_names(sum(ccep_stim_areas,2)>0,:);
+    out(ss).events_table_clipped    = bids_clipEvents(events_table_clipped,'electrical_stimulation_site', ccep_stim_names(sum(ccep_stim_areas,2)>0,:)); % keep only events with stim current == 4.0 or 6.0 mA
 end
 %% Plot single trials for Sub-01
-ss = 1;
-el_stim = {'RC1-RC2','RC2-RC3','RC3-RC4'};%,'RC4-RC5'};
-el_record = 'RY2';
+ss              = 1;
+el_stim         = {'RC1-RC2','RC2-RC3','RC3-RC4'};
+el_record       = 'RY2';
 
-figure('Position',[0 0 550 800]), hold on;
+
+figure('Position',[0 0 550 800]), hold on;              % prepare to plot
 for kk = 1:length(el_stim)
-
     events_table_thisSite = bids_clipEvents(out(ss).events_table_clipped,'electrical_stimulation_site', el_stim{kk});
 
     % Settings for CRP
-    baseline_t = [-0.5 -0.05];
-    t_win_crp = [0.015 1];
-    % CAR
+    baseline_t      = [-0.5 -0.05];
+    t_win_crp       = [0.015 1];
+    % use adjusted CAR
     [average_ccep, average_ccep_names, tt, srate, crp_out, single_trials] = ...
         ccepPCC_loadAverageSubset(out(ss).fileName, events_table_thisSite, ...
         out(ss).good_channels, out(ss).channel_areas, baseline_t, t_win_crp, 1, 1);
 
-    chan_ind = find(ismember(out(ss).channel_names,el_record));
+    chan_ind        = find(ismember(out(ss).channel_names,el_record));  % get channel index
 
-    plot_responses = squeeze(single_trials(chan_ind,:,:));
+    plot_responses  = squeeze(single_trials(chan_ind,:,:));
 
     % plot single and average responses
     subplot(3,1,kk), hold on
@@ -128,15 +130,15 @@ end
 
 %% --------------------------------------------------
 %% Plot single trials for Sub-08
-ss = 8;
-el_stim = {'RC1-RC2'}; % stim site with 55 trials
-el_record = {'RZ1','RPO1','RQ1'}; % all PCC sites
+ss              = 8;
+el_stim         = {'RC1-RC2'}; % stim site with 55 trials
+el_record       = {'RZ1','RPO1','RQ1'}; % all PCC sites
 
 events_table_thisSite = bids_clipEvents(out(ss).events_table_clipped,'electrical_stimulation_site', el_stim);
 
 % Settings for CRP
-baseline_t = [-0.5 -0.05];
-t_win_crp = [0.015 1];
+baseline_t      = [-0.5 -0.05];
+t_win_crp       = [0.015 1];
 % load and preprocess data
 [average_ccep, average_ccep_names, tt, srate, crp_out, single_trials] = ...
     ccepPCC_loadAverageSubset(out(ss).fileName, events_table_thisSite, ...
@@ -144,9 +146,9 @@ t_win_crp = [0.015 1];
 
 figure('Position',[0 0 550 800]), hold on;
 for kk = 1:length(el_record)
-    chan_ind = find(ismember(out(ss).channel_names,el_record{kk}));
+    chan_ind        = find(ismember(out(ss).channel_names,el_record{kk})); % get channel index
 
-    plot_responses = squeeze(single_trials(chan_ind,:,:));
+    plot_responses  = squeeze(single_trials(chan_ind,:,:));
 
     % plot single and average responses
     subplot(3,1,kk), hold on
