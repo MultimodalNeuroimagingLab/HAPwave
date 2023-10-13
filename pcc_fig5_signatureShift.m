@@ -35,30 +35,30 @@ nr_subs = length(all_subjects);
 for ss = 1:nr_subs % subject loop
    
     % Get sites that belong to the measurement ROI (rec_area)
-    these_measured_sites = find(ismember(all_out(ss).channel_areas,area_codes{1}));
+    these_measured_sites    = find(ismember(all_out(ss).channel_areas,area_codes{1}));
     
     % Get sites that belong to the stimulated ROI (stim_area)
-    these_stim_sites = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{1}) | ...
-        ismember(all_out(ss).average_ccep_areas(:,2),area_codes{1}));
+    these_stim_sites        = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{1}) | ...
+                            ismember(all_out(ss).average_ccep_areas(:,2),area_codes{1}));
     
     % p-values for correction of multiple comparisons
-    all_out(ss).hasdata = NaN(size(all_out(ss).crp_out));
-    all_out(ss).crp_p = NaN(size(all_out(ss).crp_out));
-    all_out(ss).a_prime = NaN(size(all_out(ss).crp_out));
-    all_out(ss).cod = NaN(size(all_out(ss).crp_out));
-    all_out(ss).crp_p_adj = NaN(size(all_out(ss).crp_out));
-    all_out(ss).h = NaN(size(all_out(ss).crp_out));
+    all_out(ss).hasdata     = NaN(size(all_out(ss).crp_out));
+    all_out(ss).crp_p       = NaN(size(all_out(ss).crp_out));
+    all_out(ss).a_prime     = NaN(size(all_out(ss).crp_out));
+    all_out(ss).cod         = NaN(size(all_out(ss).crp_out));
+    all_out(ss).crp_p_adj   = NaN(size(all_out(ss).crp_out));
+    all_out(ss).h           = NaN(size(all_out(ss).crp_out));
     all_out(ss).avg_trace_tR = zeros(size(all_out(ss).average_ccep));
     
     % loop over measured sites
     for kk = 1:length(these_measured_sites)
         % loop over the stimulated pairs
         for ll = 1:length(these_stim_sites)
-            if ~isempty(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).data) % ~ same stim/recording site
-                all_out(ss).hasdata(these_measured_sites(kk), these_stim_sites(ll)) = 1;
-                all_out(ss).crp_p(these_measured_sites(kk), these_stim_sites(ll)) = all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_projs.p_value_tR;
-                all_out(ss).a_prime(these_measured_sites(kk), these_stim_sites(ll)) = mean(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.al_p); % mean alpha prime across trials;
-                all_out(ss).cod(these_measured_sites(kk), these_stim_sites(ll)) = median(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.cod); % median across trials
+            if ~isempty(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).data)       % CRPs computed for this connection
+                all_out(ss).hasdata(these_measured_sites(kk), these_stim_sites(ll))             = 1;    % CRP is significant
+                all_out(ss).crp_p(these_measured_sites(kk), these_stim_sites(ll))               = all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_projs.p_value_tR;
+                all_out(ss).a_prime(these_measured_sites(kk), these_stim_sites(ll))             = mean(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.al_p); % mean alpha prime across trials;
+                all_out(ss).cod(these_measured_sites(kk), these_stim_sites(ll))                 = median(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.cod); % median across trials
                 sig_timepoints = find(all_out(ss).tt>0.015 & all_out(ss).tt<=all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.tR);
                 all_out(ss).avg_trace_tR(these_measured_sites(kk), these_stim_sites(ll),sig_timepoints) = all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.C;
 
@@ -67,29 +67,29 @@ for ss = 1:nr_subs % subject loop
             end
         end
     end
-    pvals = all_out(ss).crp_p(all_out(ss).hasdata==1);
-    qq = 0.05;
-    [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(pvals,qq,'dep','no');
-    all_out(ss).crp_p_adj(all_out(ss).hasdata==1) = adj_p;
-    all_out(ss).h(all_out(ss).hasdata==1) = h;
+    pvals                                           = all_out(ss).crp_p(all_out(ss).hasdata==1);
+    qq                                              = 0.05;
+    [h, crit_p, adj_ci_cvrg, adj_p]                 = fdr_bh(pvals,qq,'dep','no');
+    all_out(ss).crp_p_adj(all_out(ss).hasdata==1)   = adj_p;
+    all_out(ss).h(all_out(ss).hasdata==1)           = h;
 end
 
 
 %% Posterior cingulate
-rgb_color = {[0 0.4470 0.7410],[0.3010 0.7450 0.9330],[0.9290 0.6940 0.1250],[1 .8 .1]};
-rgb_label = {'blue','light blue','yellow','light yellow'};
+rgb_color       = {[0 0.4470 0.7410],[0.3010 0.7450 0.9330],[0.9290 0.6940 0.1250],[1 .8 .1]};
+rgb_label       = {'blue','light blue','yellow','light yellow'};
 
-area_codes_r = {[12123 53],[54],[12108 12109 12110],[12106 12107],[49]}; % right
-area_codes_l = {[11123 17],[18],[11108 11109 11110],[11106 11107],[10]}; % left
-area_names = {'Hipp','Amyg','PCC','ACC','ANT'};   
+area_codes_r    = {[12123 53],[54],[12108 12109 12110],[12106 12107],[49]}; % right
+area_codes_l    = {[11123 17],[18],[11108 11109 11110],[11106 11107],[10]}; % left
+area_names      = {'Hipp','Amyg','PCC','ACC','ANT'};   
 
-sub_hemi = {'r','r','r','l','r','l','l','r'};
+sub_hemi        = {'r','r','r','l','r','l','l','r'};
 
 out_plot_responses_norm = [];
-out_subj_ind = [];
-resp_counter = 0;
+out_subj_ind            = [];
+resp_counter            = 0;
 
-ss = 1;
+ss = 1; % which subject
 
 if isequal(sub_hemi{ss},'l')
     area_codes = area_codes_l;
@@ -97,17 +97,19 @@ elseif isequal(sub_hemi{ss},'r')
     area_codes = area_codes_r;
 end
 
-stim_ind = 1;
+% which connection 
+% Hipp = 1; Amyg = 2; PCC = 3; ACC = 4; ANT = 5
+stim_ind    = 1;
 measure_ind = 3;
 
 % Get sites that belong to the measured & stim ROI
-these_measured_sites = find(ismember(all_out(ss).channel_areas,area_codes{measure_ind}));
-these_stim_sites = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{stim_ind}) | ...
-    ismember(all_out(ss).average_ccep_areas(:,2),area_codes{stim_ind}));
+these_measured_sites    = find(ismember(all_out(ss).channel_areas,area_codes{measure_ind}));
+these_stim_sites        = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{stim_ind}) | ...
+                               ismember(all_out(ss).average_ccep_areas(:,2),area_codes{stim_ind}));
 
-sign_resp = all_out(ss).crp_p_adj<0.05; % plot p<0.05 FDR corrected
+sign_resp               = all_out(ss).crp_p_adj<0.05; % plot p<0.05 FDR corrected
 
-t_win_cod = [0.015 0.500]; % window for vector length normalization and plotting across subjects
+t_win_cod               = [0.015 0.500]; % window for vector length normalization and plotting across subjects
 
 % prepare to plot 
 figure('Position',[0 0 500 350]), hold on; %('Position',[0 0 600 200]), hold on
@@ -122,8 +124,8 @@ for kk = 1:length(these_measured_sites)
             
             % Normalize. Scaling to unit length (Euclidean lenght): https://en.wikipedia.org/wiki/Feature_scaling
             % unit length taken in same window as stats
-            response_vector_length = sum(plot_responses(all_out(ss).tt > t_win_cod(1) &  all_out(ss).tt < t_win_cod(2)) .^ 2) .^ .5;
-            plot_responses_norm = plot_responses ./ (response_vector_length*ones(size(plot_responses))); % normalize (L2 norm) each trial
+            response_vector_length  = sum(plot_responses(all_out(ss).tt > t_win_cod(1) &  all_out(ss).tt < t_win_cod(2)) .^ 2) .^ .5;
+            plot_responses_norm     = plot_responses ./ (response_vector_length*ones(size(plot_responses))); % normalize (L2 norm) each trial
 
             % sites that produce different signatures
             if all_out(ss).elec_relDist(these_measured_sites(kk)) > 2.3       % is a superficial contact (>2.33mm)
@@ -137,9 +139,9 @@ for kk = 1:length(these_measured_sites)
             end
 
             % save outputs
-            resp_counter = resp_counter+1;
+            resp_counter                            = resp_counter+1;
             out_plot_responses_norm(resp_counter,:) = plot_responses_norm;
-            out_subj_ind(resp_counter,:) = ss;
+            out_subj_ind(resp_counter,:)            = ss;
         end
     end
 end

@@ -103,7 +103,7 @@ for measure_ind = 1:length(area_names)  % loop through measured sites
            
             % Get sites in stimulated ROI (stim_area)
             these_stim_sites        = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{stim_ind}) | ...
-                ismember(all_out(ss).average_ccep_areas(:,2),area_codes{stim_ind}));
+                                           ismember(all_out(ss).average_ccep_areas(:,2),area_codes{stim_ind}));
 
             % loop over measured sites
             for kk = 1:length(these_measured_sites)

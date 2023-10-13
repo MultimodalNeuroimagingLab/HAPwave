@@ -141,37 +141,37 @@ else
 end
 
 if nargin<2,
-    q=.05;
+    q = .05;
 end
 
 if nargin<3,
-    method='pdep';
+    method = 'pdep';
 end
 
 if nargin<4,
-    report='no';
+    report = 'no';
 end
 
-s=size(pvals);
+s = size(pvals);
 if (length(s)>2) || s(1)>1,
-    [p_sorted, sort_ids]=sort(reshape(pvals,1,prod(s)));
+    [p_sorted, sort_ids] = sort(reshape(pvals,1,prod(s)));
 else
     %p-values are already a row vector
     [p_sorted, sort_ids]=sort(pvals);
 end
-[dummy, unsort_ids]=sort(sort_ids); %indexes to return p_sorted to pvals order
-m=length(p_sorted); %number of tests
+[dummy, unsort_ids] = sort(sort_ids); %indexes to return p_sorted to pvals order
+m = length(p_sorted); %number of tests
 
 if strcmpi(method,'pdep'),
     %BH procedure for independence or positive dependence
-    thresh=(1:m)*q/m;
-    wtd_p=m*p_sorted./(1:m);
+    thresh  = (1:m)*q/m;
+    wtd_p   = m*p_sorted./(1:m);
     
 elseif strcmpi(method,'dep')
     %BH procedure for any dependency structure
-    denom=m*sum(1./(1:m));
-    thresh=(1:m)*q/denom;
-    wtd_p=denom*p_sorted./[1:m];
+    denom   = m*sum(1./(1:m));
+    thresh  = (1:m)*q/denom;
+    wtd_p   = denom*p_sorted./[1:m];
     %Note, it can produce adjusted p-values greater than 1!
     %compute adjusted p-values
 else
@@ -180,9 +180,9 @@ end
 
 if nargout>3,
     %compute adjusted p-values; This can be a bit computationally intensive
-    adj_p=zeros(1,m)*NaN;
+    adj_p       = zeros(1,m)*NaN;
     [wtd_p_sorted, wtd_p_sindex] = sort( wtd_p );
-    nextfill = 1;
+    nextfill    = 1;
     for k = 1 : m
         if wtd_p_sindex(k)>=nextfill
             adj_p(nextfill:wtd_p_sindex(k)) = wtd_p_sorted(k);
@@ -192,19 +192,19 @@ if nargout>3,
             end;
         end;
     end;
-    adj_p=reshape(adj_p(unsort_ids),s);
+    adj_p = reshape(adj_p(unsort_ids),s);
 end
 
-rej=p_sorted<=thresh;
-max_id=find(rej,1,'last'); %find greatest significant pvalue
+rej = p_sorted<=thresh;
+max_id = find(rej,1,'last'); %find greatest significant pvalue
 if isempty(max_id),
-    crit_p=0;
-    h=pvals*0;
-    adj_ci_cvrg=NaN;
+    crit_p      = 0;
+    h           = pvals*0;
+    adj_ci_cvrg = NaN;
 else
-    crit_p=p_sorted(max_id);
-    h=pvals<=crit_p;
-    adj_ci_cvrg=1-thresh(max_id);
+    crit_p      = p_sorted(max_id);
+    h           = pvals<=crit_p;
+    adj_ci_cvrg = 1-thresh(max_id);
 end
 
 if strcmpi(report,'yes'),
