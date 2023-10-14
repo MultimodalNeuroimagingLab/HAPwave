@@ -8,29 +8,28 @@ clearvars, close all, clc
 addpath(genpath(pwd))
 
 % set local path to your BIDS directory:
-myPath = setLocalDataPath(1);
-localDataPath = myPath.input;
+myPath          = setLocalDataPath(1);
+localDataPath   = myPath.input;
 
 % load the meta data
-all_subjects = {'01','02','03','04','05','06','07','08','09','10','11','12'}; % 
-all_hemi = {'r','r','r','l','r','l','l','r'};
-all_runs = {'01','01','01','01','01','01','01','01'};
+all_subjects    = {'01','02','03','04','05','06','07','08'}; % 
+all_hemi        = {'r','r','r','l','r','l','l','r'};
+all_runs        = {'01','01','01','01','01','01','01','01'};
 
 % load the meta data
-for ss = 1:length(all_subjects)
-    bids_sub = all_subjects{ss};
-    bids_ses = 'ieeg01';
-    bids_task = 'ccep';
-    bids_run = all_runs{ss};
+for ss              = 1:length(all_subjects)
+    bids_sub        = all_subjects{ss};
+    bids_ses        = 'ieeg01';
+    bids_task       = 'ccep';
+    bids_run        = all_runs{ss};
 
     [events_table,channels_table,electrodes_table,sub_out] = pcc_loadAveragesStats(localDataPath,bids_sub,bids_ses,bids_task,bids_run);
-    all_out(ss) = sub_out;
+    all_out(ss)     = sub_out;
 end
 
 %% Correct P values for number of comparisons in each subject
-area_codes = {[12123 53 54 12108 12109 12110 12106 12107 11123 49 17 18 11108 11109 11110 11106 11107 10]}; % all areas
-
-nr_subs = length(all_subjects);
+area_codes  = {[12123 53 54 12108 12109 12110 12106 12107 11123 49 17 18 11108 11109 11110 11106 11107 10]}; % all areas
+nr_subs     = length(all_subjects);
 
 for ss = 1:nr_subs % subject loop
    
@@ -86,21 +85,20 @@ area_names      = {'Hipp','Amyg','PCC','ACC','ANT'};
 sub_hemi        = {'r','r','r','l','r','l','l','r'};
 
 out_plot_responses_norm = [];
-out_subj_ind            = [];
-resp_counter            = 0;
+out_subj_ind    = [];
+resp_counter    = 0;
 
-ss = 1; % which subject
+% Which subject and 
+ss              = 1; % which subject
+% Hipp = 1; Amyg = 2; PCC = 3; ACC = 4; ANT = 5
+stim_ind        = 1;
+measure_ind     = 3;
 
 if isequal(sub_hemi{ss},'l')
     area_codes = area_codes_l;
 elseif isequal(sub_hemi{ss},'r')
     area_codes = area_codes_r;
 end
-
-% which connection 
-% Hipp = 1; Amyg = 2; PCC = 3; ACC = 4; ANT = 5
-stim_ind    = 1;
-measure_ind = 3;
 
 % Get sites that belong to the measured & stim ROI
 these_measured_sites    = find(ismember(all_out(ss).channel_areas,area_codes{measure_ind}));
@@ -145,7 +143,6 @@ for kk = 1:length(these_measured_sites)
         end
     end
 end
-
 
 title('PCC depths','Blue, superficial | Yellow, deep')
 xlim([-0.2 .6])

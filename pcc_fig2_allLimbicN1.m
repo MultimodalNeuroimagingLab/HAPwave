@@ -82,7 +82,7 @@ area_codes_l    = {[11123 17],[18],[11108 11109 11110],[11106 11107]}; % left
 
 out             = [];                   % prepare an AreaByArea structure, with all subjects concatinated for each area
 subj_resp_total = zeros(nr_subs,1);     % prepare for total of adjusted FDR per connection (stim->measured)
-t_win_norm      = [0.015 0.500];        % window for vector length normalization and plotting across subjects
+t_win_norm      = [0.015 0.500];        % window for pre-processing
 tt              = all_out(ss).tt;
 
 for measure_ind = 1:length(area_names)  % loop through measured sites
@@ -165,8 +165,9 @@ for measure_ind = 1:length(area_names)  % loop through measured sites
                         % Scaling to unit length (Euclidean lenght): https://en.wikipedia.org/wiki/Feature_scaling
                         % unit length taken in same window as stats
                         response_vector_length      = sum(plot_responses(all_out(ss).tt > t_win_norm(1) &  all_out(ss).tt < t_win_norm(2)) .^ 2) .^ .5;
-                        plot_responses_norm         = plot_responses ./ (response_vector_length*ones(size(plot_responses))); % normalize (L2 norm) each trial
+                        plot_responses_norm         = plot_responses ./ (response_vector_length * ones(size(plot_responses))); % normalize (L2 norm) each trial
                        
+                        % save  waveform
                         out(measure_ind,stim_ind).plot_responses_norm(resp_counter, :) = plot_responses_norm;
 
                         % save subject index

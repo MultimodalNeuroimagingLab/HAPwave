@@ -14,11 +14,11 @@ all_subjects    = {'01','02','03','04','05','06','07','08'};        % List of su
 all_hemi        = {'r','r','r','l','r','l','l','r'};                % List of hemispheres
 all_runs        = {'01','01','01','01','01','01','01','01'};        % List of runs
 
-for ss          = 1:length(all_subjects)
-    bids_sub    = all_subjects{ss};
-    bids_ses    = 'ieeg01';
-    bids_task   = 'ccep';
-    bids_run    = all_runs{ss};
+for ss              = 1:length(all_subjects)
+    bids_sub        = all_subjects{ss};
+    bids_ses        = 'ieeg01';
+    bids_task       = 'ccep';
+    bids_run        = all_runs{ss};
 
     % Load metadata and stats
     [events_table,channels_table,electrodes_table,sub_out] = ...
@@ -80,12 +80,9 @@ end
 area_names      = {'Hipp','Amyg','PCC','ACC'};   
 area_codes_r    = {[12123 53],[54],[12108 12109 12110],[12106 12107]};  % right
 area_codes_l    = {[11123 17],[18],[11108 11109 11110],[11106 11107]};  % left
-nr_subs         = length(all_subjects);                                 % number of subjects
-out             = []; % prepare AreaByArea structure, with all subjects concatinated for each area
-
-subj_resp_total = zeros(nr_subs,1);     % stim-->measured pair for adjusted FDR
-
-t_win_norm      = [0.015 0.500];             % window for vector length normalization and plotting across subjects
+out             = [];                   % prepare areaXarea structure with all subjects concatinated
+subj_resp_total = zeros(nr_subs,1);     % set counter for significant responses at 0
+t_win_norm      = [0.015 0.500];        % time window for pre-processing
 
 for measure_ind = 1:length(area_names)  % loop through measured sites
     for stim_ind = 1:length(area_names) % now go through stimulated sites
@@ -114,28 +111,20 @@ for measure_ind = 1:length(area_names)  % loop through measured sites
                     if ~isempty(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).data) % ~ same stim/recording site
                         
                         % this is a pair, counting for multiple comparison correction per subject
-                        subj_resp_total(ss)     = subj_resp_total(ss) + 1; % set counter
+                        subj_resp_total(ss)     = subj_resp_total(ss) + 1;          % set counter
                         
                         % first raw responses
                         plot_responses          = squeeze(all_out(ss).average_ccep(these_measured_sites(kk), these_stim_sites(ll), :));
 
                         % save outputs
-                        resp_counter            = resp_counter + 1;
-
-                        % get CCEP responses for plotting
-                        % Scaling to unit length (Euclidean lenght): https://en.wikipedia.org/wiki/Feature_scaling
-                        % unit length taken in same window as stats
-                        response_vector_length  = sum(plot_responses(all_out(ss).tt > t_win_norm(1) &  all_out(ss).tt < t_win_norm(2)) .^ 2) .^ .5;
-                        plot_responses_norm     = plot_responses ./ (response_vector_length*ones(size(plot_responses))); % waveforms with voltage in uV
-                        out(measure_ind,stim_ind).plot_responses(resp_counter, :) = plot_responses; % save waves in matrix
-
-                        % store subject index
-                        out(measure_ind,stim_ind).subj_ind(resp_counter, :) = ss;
+                        resp_counter            = resp_counter + 1;                 % count significant wave
+                        out(measure_ind,stim_ind).plot_responses(resp_counter, :)   = plot_responses;   % save significant  waveform
+                        out(measure_ind,stim_ind).subj_ind(resp_counter, :)         = ss;               % get subject's index
                         
                         % save CRP stuff for 
-                        out(measure_ind,stim_ind).p(resp_counter, :)        = all_out(ss).crp_p_adj(these_measured_sites(kk), these_stim_sites(ll));
-                        out(measure_ind,stim_ind).cod(resp_counter, :)      = all_out(ss).cod(these_measured_sites(kk), these_stim_sites(ll)); 
-                        out(measure_ind,stim_ind).a_prime(resp_counter, :)  = all_out(ss).a_prime(these_measured_sites(kk), these_stim_sites(ll)); 
+                        out(measure_ind,stim_ind).p(resp_counter, :)        = all_out(ss).crp_p_adj(these_measured_sites(kk), these_stim_sites(ll));    % save adjusted p
+                        out(measure_ind,stim_ind).cod(resp_counter, :)      = all_out(ss).cod(these_measured_sites(kk), these_stim_sites(ll));          % save COD
+                        out(measure_ind,stim_ind).a_prime(resp_counter, :)  = all_out(ss).a_prime(these_measured_sites(kk), these_stim_sites(ll));      % save alpha prime
                     end
                 end 
             end
@@ -144,7 +133,7 @@ for measure_ind = 1:length(area_names)  % loop through measured sites
 end
 
 
-%% plot average waveforms at single-sub level (voltage in uV)
+%% plot average waveforms at per subject (voltage in uV)
 sub_axis = {[-250 700],[-110 300],[-350 300],[-750 2100],[-200 350],[-500 1000],[-300 350],[-250 750]}; % each subject has different y-axis
 sub_color = {[0 0.4470 0.7410],...  % blue
     [0.8500 0.3250 0.0980],...      % orange
@@ -157,7 +146,7 @@ sub_color = {[0 0.4470 0.7410],...  % blue
 
 % Set connection to plot with stim and meas ROI:
 % HC= 1; Amg= 2; PCC= 3; ACC= 4
-stim_ind        = 1;       % Stimulated ROI  
+stim_ind        = 1;    % Stimulated ROI  
 measure_ind     = 3;    % Measured ROI
 
 figure('Position',[0 0 400 800]), hold on
@@ -187,7 +176,7 @@ for ss = 1:8
 
         % get proportion of sign responses
         ss_sign     = width(this_set);
-        txt         = 100 * ss_sign /sum(ss_resps)                     
+        txt         = 100 * ss_sign /sum(ss_resps)          % percentage of significant responses
         text(-.1, 200, num2str(txt)),
         title([area_names{stim_ind} ' -> ' area_names{measure_ind}])
     end
