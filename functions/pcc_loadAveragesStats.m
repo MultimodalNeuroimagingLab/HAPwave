@@ -10,7 +10,7 @@ end
 
 % just making sure we always load stats in the same way across scripts.
 
-% set filenames: mefd, events, channels and electrodes
+% set filenames: events, channels and electrodes
 events_tsv_name = fullfile(localDataPath,['sub-' bids_sub],['ses-' bids_ses],'ieeg',...
     ['sub-' bids_sub '_ses-' bids_ses '_task-' bids_task '_run-' bids_run '_events.tsv']);
 channels_tsv_name = fullfile(localDataPath,['sub-' bids_sub],['ses-' bids_ses],'ieeg',...
@@ -30,7 +30,6 @@ gL_white            = gifti(fullfile(localDataPath,'derivatives','freesurfer',['
 gR_white            = gifti(fullfile(localDataPath,'derivatives','freesurfer',['sub-' bids_sub],'white.R.surf.gii'));
 distLim             = 6;
 [dist_gw_info]      = ieeg_eldist2pial2white(electrodes_table,gL_pial,gR_pial,gL_white,gR_white, distLim);
-
 
 % find good sEEG channels
 good_channels       = find(ismember(channels_table.type,{'SEEG'}) & ...

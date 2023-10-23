@@ -81,7 +81,7 @@ sub_hemi        = {'r','r','r','l','r','l','l','r'};
 
 % ______________________________________________________________________ %
 % %% Set subject to test %%
-ss              = 2;
+ss              = 7;
 
 if isequal(sub_hemi{ss},'l')
     area_codes = area_codes_l;
@@ -105,7 +105,7 @@ these_measured_sites    = find(ismember(all_out(ss).channel_areas,area_codes{mea
 these_stim_sites        = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{stim_ind}) | ...
                                ismember(all_out(ss).average_ccep_areas(:,2),area_codes{stim_ind}));
 
-sign_resp       = all_out(ss).crp_p_adj<0.05;   % plot p<0.05 FDR corrected
+sign_resp       = all_out(ss).crp_p_adj < 0.05;   % plot p<0.05 FDR corrected
 sign_resp(all_out(ss).bad_channels,:) = 0;      % bad channels cannot be significant
 t_win_cod       = [0.015 0.500];                % window for vector length normalization and plotting across subjects
 

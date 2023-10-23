@@ -21,7 +21,9 @@ In order to analyse the data, and reproduce figures from the manuscript, use the
 - Make figure 4: pcc_fig4_sigCCEPs.m
 - Make figure 5: pcc_fig5_signatureShift.m
 - Make figure 6: pcc_fig6_temporalDelay.m
-- Make figure 7: pcc_fig7c_xCorrelation.m
+- Make figure 7: pcc_fig7a_dMRI_renderLimbic_diadem
+		 pcc_fig7c_xCorrelation.m
+- Make figure 8: pcc_fig8_LDAwaveform.m
 
 
 

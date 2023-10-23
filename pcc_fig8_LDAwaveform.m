@@ -25,22 +25,22 @@ for ss = 1:length(all_subjects)
     all_out(ss)     = sub_out;
 end
 
-% %% Now correct P values for number of comparisons in each subject
-% Fisrt load the limbic codes in both right and left hemis
-area_codes      = {[12123 53 54 12108 12109 12110 12106 12107 59 11123 17 18 11108 11109 11110 11106 11107 10]};
+% Correct limbic P values for number of comparisons in each subject
+% Fisrt set the limbic codes for both hemispheres (Destrieux atlas)
+area_codes      = {[12123 53 54 12108 12109 12110 12106 12107 49 11123 17 18 11108 11109 11110 11106 11107 10]};
 nr_subs         = length(all_subjects);
 
-% Loop over subjects
+% Loop over subjects to get CCEP params of limbic CCEPs
 for ss = 1:nr_subs
    
-    % List sites that belong to the recording ROI (measured_area)
+    % Lists recording ROI (measured_area)
     these_measured_sites    = find(ismember(all_out(ss).channel_areas,area_codes{1}));
     
-    % List sites that belong to the stimulated ROI (stim_area)
+    % Lists stimulated ROI (stim_area)
     these_stim_sites        = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{1})...
                                  | ismember(all_out(ss).average_ccep_areas(:,2),area_codes{1}));
     
-    % prepare for correction of multiple comparisons of p-values
+    % Prepare variables for correction of multiple comparisons of p-values on CRPs
     all_out(ss).hasdata     = NaN(size(all_out(ss).crp_out));
     all_out(ss).crp_p       = NaN(size(all_out(ss).crp_out));
     all_out(ss).a_prime     = NaN(size(all_out(ss).crp_out));
@@ -53,37 +53,37 @@ for ss = 1:nr_subs
     for kk = 1:length(these_measured_sites)
         % loop over the stimulated pairs
         for ll = 1:length(these_stim_sites)
-            if ~isempty(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).data)   % we have CRPs
-                all_out(ss).hasdata(these_measured_sites(kk), these_stim_sites(ll)) = 1;            % is significant
-                all_out(ss).crp_p(these_measured_sites(kk), these_stim_sites(ll))   = all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_projs.p_value_tR;   % p-value
-                all_out(ss).a_prime(these_measured_sites(kk), these_stim_sites(ll)) = mean(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.al_p); % mean 
-                all_out(ss).cod(these_measured_sites(kk), these_stim_sites(ll))     = median(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.cod);    % CRP coefficent of determination
-                sig_timepoints = find(all_out(ss).tt>0.015 & all_out(ss).tt<=all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.tR);                 % response duration
-                all_out(ss).avg_trace_tR(these_measured_sites(kk), these_stim_sites(ll),sig_timepoints) = all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.C; % al_p for tR
+            if ~isempty(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).data)
+                all_out(ss).hasdata(these_measured_sites(kk), these_stim_sites(ll)) = 1;            % mark if CRP calculated 
+                all_out(ss).crp_p(these_measured_sites(kk), these_stim_sites(ll))   = all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_projs.p_value_tR;     % get the p-value
+                all_out(ss).a_prime(these_measured_sites(kk), these_stim_sites(ll)) = mean(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.al_p);     % get the alpha coefficient weights
+                all_out(ss).cod(these_measured_sites(kk), these_stim_sites(ll))     = median(all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.cod);    % get the coefficent of determination
+                sig_timepoints = find(all_out(ss).tt>0.015 & all_out(ss).tt<=all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.tR);                     % get the response duration
+                all_out(ss).avg_trace_tR(these_measured_sites(kk), these_stim_sites(ll),sig_timepoints) = all_out(ss).crp_out(these_measured_sites(kk), these_stim_sites(ll)).crp_parms.C; % get canonical shape
             else
-                all_out(ss).hasdata(these_measured_sites(kk), these_stim_sites(ll)) = 0;            % is not significant
+                all_out(ss).hasdata(these_measured_sites(kk), these_stim_sites(ll)) = 0;            % no CRPs
             end
         end
     end
-    pvals                                           = all_out(ss).crp_p(all_out(ss).hasdata==1);  % get pVals
-    qq                                              = 0.05; % false discovery rate
+    % Correction of multiple comparisons for this subject
+    pvals                                           = all_out(ss).crp_p(all_out(ss).hasdata==1);
+    qq                                              = 0.05;         % false discovery rate
     [h, crit_p, adj_ci_cvrg, adj_p]                 = fdr_bh(pvals,qq,'dep','no'); % Benjamini & Yekutieli FDR correction 
-    all_out(ss).crp_p_adj(all_out(ss).hasdata==1)   = adj_p; % Adjusted pVals
-    all_out(ss).h(all_out(ss).hasdata==1)           = h; % adjusted pVal is significant
+    all_out(ss).crp_p_adj(all_out(ss).hasdata==1)   = adj_p;        % Adjusted pVals
+    all_out(ss).h(all_out(ss).hasdata==1)           = h;            % adjusted pVal is significant
 end
 
-% %% Load stim and measure sites %%
-
+%% Load params for analysis
 % Sort limbic codes by hemisphere
 area_names      = {'Hipp','Amyg','PCC','ACC','ANT'};   
-area_codes_r    = {[12123 53],[54],[12108 12109 12110],[12106 12107],[59]}; % right
+area_codes_r    = {[12123 53],[54],[12108 12109 12110],[12106 12107],[49]}; % right
 area_codes_l    = {[11123 17],[18],[11108 11109 11110],[11106 11107],[10]}; % left
 
 out             = [];                   % prepare areaByarea structure, with all subjects concatinated for each area
 subj_resp_total = zeros(nr_subs,1);     % stim-->measured pair for adjusted FDR
 t_win_norm      = [0.015 0.500];        % window for vector length normalization and plotting across subjects
 
-for measure_ind = 1:length(area_names)  % loop through measured sites
+for measure_ind = 1:length(area_names)  % loop over measured sites
     for stim_ind = 1:length(area_names) % now go through stimulated sites
         resp_counter = 0;               % counting all responses across subjects for this connection
 
@@ -102,7 +102,6 @@ for measure_ind = 1:length(area_names)  % loop through measured sites
             % Get stimulated ROI (stim_area)
             these_stim_sites        = find(ismember(all_out(ss).average_ccep_areas(:,1),area_codes{stim_ind}) | ...
                                            ismember(all_out(ss).average_ccep_areas(:,2),area_codes{stim_ind}));
-            
             % loop over measured sites
             for kk = 1:length(these_measured_sites)
                 % loop over the stimulated pairs
@@ -127,9 +126,10 @@ for measure_ind = 1:length(area_names)  % loop through measured sites
                         % store subject index
                         out(measure_ind,stim_ind).subj_ind(resp_counter, :) = ss;
                         
-                        % save CRP parms and other params
+                        % save parms
                         out(measure_ind,stim_ind).elec_relDist(resp_counter, :)= all_out(ss).elec_relDist(these_measured_sites(kk));
                         out(measure_ind,stim_ind).p(resp_counter, :)        = all_out(ss).crp_p_adj(these_measured_sites(kk), these_stim_sites(ll));
+                        out(measure_ind,stim_ind).h(resp_counter, :)        = all_out(ss).h(these_measured_sites(kk), these_stim_sites(ll));
                         out(measure_ind,stim_ind).cod(resp_counter, :)      = all_out(ss).cod(these_measured_sites(kk), these_stim_sites(ll)); 
                         out(measure_ind,stim_ind).a_prime(resp_counter, :)  = all_out(ss).a_prime(these_measured_sites(kk), these_stim_sites(ll)); 
                     end
@@ -140,20 +140,21 @@ for measure_ind = 1:length(area_names)  % loop through measured sites
 end
 
 %% Load matrix and format for analysis
-srate           = all_out(ss).srate;
-ttOrig          = (0:10239)/srate - 2;
+srate           = all_out(ss).srate;            % get sampling rate from metadata
+ttOrig          = (0:10239)/srate - 2;          % set start time
 
-V_allsubs       = [];
-labels_allsubs  = cell(0, 2); % measured, stim
-subNum          = [];
+V_allsubs       = [];                           % prepare matrix
+labels_allsubs  = cell(0, 2);                   % get labels: measured, stim
+subNum          = [];                           % prepare subject labels
 
 % ordered labels for the rows and columns
 areas           = {'HC', 'Amg', 'PCC', 'ACC', 'ANT'};
 
 for ii = 1:size(out, 1) % stim sites
     for jj  = 1:size(out, 2) % measured sites
-        p               = out(ii, jj).p; % FDR-adjusted p value
-        h               = p < 0.05; % significance
+        p               = out(ii, jj).p;    % FDR-adjusted p value
+        h               = p < 0.05;
+%         h               = logical(out(ii,jj).h);     % p < 0.05 
         
         resp            = out(ii, jj).plot_responses_norm(h, :);
         
@@ -163,8 +164,8 @@ for ii = 1:size(out, 1) % stim sites
             resp(dists > 2.3, :) = -resp(dists > 2.3, :);
         end
         
-        subNum          = [subNum; out(ii, jj).subj_ind(h)]; % subject ID
-        V_allsubs       = [V_allsubs; resp]; % signals
+        subNum          = [subNum; out(ii, jj).subj_ind(h)];    % subject ID
+        V_allsubs       = [V_allsubs; resp];                    % signals
         labels_allsubs  = [labels_allsubs; repmat({areas{ii}, areas{jj}}, sum(h), 1)];
     end
 end
@@ -186,9 +187,9 @@ nsubs           = length(labels_length);
 
 %% Some more data formatting and normalization
 % inversion of CCEPs
-segWin      = [0.1, 0.5];
+segWin      = [0.1, 0.5];           % set time window
 
-% take segment from 100 ms to 1000 ms
+% take segment from 100 ms to 500 ms
 V_seg       = V_allsubs(:, ttOrig >= segWin(1) & ttOrig < segWin(2));
 tt          = ttOrig(ttOrig >= segWin(1) & ttOrig < segWin(2));
 
@@ -251,21 +252,21 @@ end
 
 %% Plot example of DWT + threshold step for panel A)
 
-idx         = 10; % index of CCEP
+idx         = 51; % choose a CCEP trial 
 
 figure('Position', [200, 600, 400, 150]);
-plot(ttOrig, V_allsubs(pathIdxes.idxes{1}(idx), :)', 'k-', 'LineWidth', 1); ylim([-50, 50])
+plot(tt, V_seg(pathIdxes.idxes{1}(idx), :)', 'k-', 'LineWidth', 1); ylim([-0.1, 0.1])
 yline(0, 'Color', [0.5, 0.5, 0.5]);
 
 [wav, l]    = wavedec(V_seg(idx, :), levMax, wavType); % wavelet transform
 
 figure('Position', [200, 400, 400, 150]);
-plot(wav, 'k-', 'LineWidth', 1); xlim([-inf, inf]); ylim([-0.2, 0.2]);
+plot(wav, 'k-', 'LineWidth', 1); xlim([-inf, inf]); ylim([-0.02, 0.02]);
 yline(0, 'Color', [0.5, 0.5, 0.5]);
 
 thresh      = prctile(abs(wav), 95); wav(abs(wav) < thresh) = 0; % Keep only top 5% of coefficients
 figure('Position', [200, 200, 400, 150]);
-plot(wav, 'k-', 'LineWidth', 1); xlim([-inf, inf]); ylim([-0.2, 0.2]);
+plot(wav, 'k-', 'LineWidth', 1); xlim([-inf, inf]); ylim([-0.02, 0.02]);
 yline(0, 'Color', [0.5, 0.5, 0.5]);
 
 %% PCA on all CCEPs (no subject withheld) - determine which PCs to use, plot all CCEPs on PCA space
@@ -326,8 +327,8 @@ plot(score(exc, 1), score(exc, 2), '.', 'Color', [0.5, 0.5, 0.5]);
 training    = [score(pathIdxes.idxes{1}, PCs2Use); score(pathIdxes.idxes{5}, PCs2Use)]; % amygACC first, hippPCC second
 group       = [ones(length(pathIdxes.idxes{1}), 1); 5*ones(length(pathIdxes.idxes{5}), 1)]; % CCEP type to use for classification
 
-[class, ~, ~, ~, coeff] = classify(training, training, group); % find decision boundary coefficients for model fit on all data (without leaving any out)
-accTrain    = 100*sum(class == group) / length(class); % training accuracy
+[class, ~, ~, ~, coeff] = classify(training, training, group);      % find decision boundary coefficients for model fit on all data (without leaving any out)
+accTrain                = 100*sum(class == group) / length(class);  % training accuracy
 fprintf('Training accuracy: %0.2f%%\n', accTrain);
 
 f           = @(x, y) coeff(1, 2).const + coeff(1, 2).linear(1)*x + coeff(1, 2).linear(2)*y; % 0 = K + x*L(1) + y*L(2);
@@ -385,7 +386,7 @@ for sub = 1:nsubs
 
     %class = classify(testing, training, groupTrain); % find decision boundary coefficients for model fit on all data (without leaving any out)
     [class, ~, ~, ~, coeff] = classify(testing, training, groupTrain); % find decision boundary coefficients for model fit on all data (without leaving any out)
-    accSubs(sub)            = 100*sum(class == groupTest) / length(class); % training accuracy
+    accSubs(sub)            = 100 * sum(class == groupTest) / length(class); % training accuracy
 
     fprintf('Accuracy for test sub %d: %0.2f%%\n', sub, accSubs(sub));
 
