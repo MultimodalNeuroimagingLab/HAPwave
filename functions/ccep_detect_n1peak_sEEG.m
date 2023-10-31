@@ -71,13 +71,13 @@ function [n1_peak_sample,n1_peak_amplitude,n1_peak_time] = ccep_detect_n1peak_sE
 % modified by: Jaap van der Aar, Dora Hermes, Dorien van Blooijs, Giulio Castegnaro, UMC Utrecht, 2019
 
 
-amplitude_thresh = params.amplitude_thresh;
-n1_peak_range = params.n1_peak_range;
-peakSign = params.peakSign; % 1 for positive -1 for negative
-baseline_tt = params.baseline_tt;%tt>-.5 & tt<-.020;
+amplitude_thresh    = params.amplitude_thresh;
+n1_peak_range       = params.n1_peak_range;
+peakSign            = params.peakSign; % 1 for positive -1 for negative
+baseline_tt         = params.baseline_tt;%tt>-.5 & tt<-.020;
             
 % take area before the stimulation of the new signal and calculate its SD
-pre_stim_sd = std(average_ccep(baseline_tt));
+pre_stim_sd         = std(average_ccep(baseline_tt));
 
 % if the pre_stim_sd is smaller that the minimally needed SD,
 % which is validated as 50 uV, use this the minSD as pre_stim_sd
@@ -93,7 +93,7 @@ end
 % till first sample after 0,5 seconds (rougly 1000 samples)
 % sel = 20 , which is how many samples around a peak not considered as another peak
 
-min_peak_tt = 0.013;
+min_peak_tt         = 0.013;
 
 % UPDATED: the range for finding peaks is set from 13ms:500ms
 % post-stimulation.
@@ -106,53 +106,53 @@ all_sampneg(all_sampneg==1) = [];
 
 % convert back timepoints based on tt, substract 1 because before
 % the first sample after stimulation is taken
-all_sampneg = all_sampneg + find(tt>min_peak_tt,1) - 1;
+all_sampneg         = all_sampneg + find(tt>min_peak_tt,1) - 1;
 
 % set the starting range in which the algorithm looks
 % for a peak. Peak detection starts 13 ms after stimulation
-n1_samples_start = find(tt>min_peak_tt,1);
+n1_samples_start    = find(tt>min_peak_tt,1);
 
 % find first sample that corresponds with the given n1
 % peak range
-n1_samples_end = find(tt>n1_peak_range,1);
+n1_samples_end      = find(tt>n1_peak_range,1);
 
 % for N1, first select the range in which the N1 could appear, and
 % select the peaks found in this range
-temp_n1_peaks_samp = all_sampneg((n1_samples_start <= all_sampneg) & (all_sampneg <= n1_samples_end));
-temp_n1_peaks_ampl = all_amplneg((n1_samples_start <= all_sampneg) & (all_sampneg <= n1_samples_end));
+temp_n1_peaks_samp  = all_sampneg((n1_samples_start <= all_sampneg) & (all_sampneg <= n1_samples_end));
+temp_n1_peaks_ampl  = all_amplneg((n1_samples_start <= all_sampneg) & (all_sampneg <= n1_samples_end));
 
 % if peak(s) found, select biggest peak
 if ~isempty(temp_n1_peaks_samp)
-    max_n1_ampl = find(abs(temp_n1_peaks_ampl) == max(abs(temp_n1_peaks_ampl)));
-    n1_peak_sample = temp_n1_peaks_samp(max_n1_ampl(1));
-    n1_peak_amplitude = temp_n1_peaks_ampl(max_n1_ampl(1));
-    n1_peak_time = tt(n1_peak_sample);
+    max_n1_ampl         = find(abs(temp_n1_peaks_ampl) == max(abs(temp_n1_peaks_ampl)));
+    n1_peak_sample      = temp_n1_peaks_samp(max_n1_ampl(1));
+    n1_peak_amplitude   = temp_n1_peaks_ampl(max_n1_ampl(1));
+    n1_peak_time        = tt(n1_peak_sample);
     % otherwise give the amplitude the value NaN
 elseif isempty(temp_n1_peaks_samp)
-    n1_peak_amplitude = NaN;
-    n1_peak_sample = NaN;
-    n1_peak_time = NaN;
+    n1_peak_amplitude   = NaN;
+    n1_peak_sample      = NaN;
+    n1_peak_time        = NaN;
 end
 
 if peakSign==1 % if N1 < 0, it is deleted
     if temp_n1_peaks_ampl < 0
-        n1_peak_sample = NaN;
+        n1_peak_sample  = NaN;
         n1_peak_amplitude = NaN;
-        n1_peak_time = NaN;
+        n1_peak_time    = NaN;
     end
 elseif peakSign==-1 % if N1 > 0, it is deleted
     if temp_n1_peaks_ampl > 0
-        n1_peak_sample = NaN;
+        n1_peak_sample  = NaN;
         n1_peak_amplitude = NaN;
-        n1_peak_time = NaN;
+        n1_peak_time    = NaN;
     end
 end
 
 % if the peak is not big enough to consider as a peak, assign NaN
 if abs(n1_peak_amplitude) < amplitude_thresh * abs(pre_stim_sd)
-    n1_peak_sample = NaN;
-    n1_peak_amplitude = NaN;
-    n1_peak_time = NaN;
+    n1_peak_sample      = NaN;
+    n1_peak_amplitude   = NaN;
+    n1_peak_time        = NaN;
 end
 
             

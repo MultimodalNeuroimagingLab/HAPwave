@@ -33,16 +33,16 @@ function [out] = ieeg_eldist2pial2white(loc_info,gL_pial,gR_pial,gL_white,gR_whi
 %
 % DH 2023, Multimodal Neuroimaging Lab
 
-elecmatrix = [loc_info.x loc_info.y loc_info.z];
-out.name = loc_info.name;
+elecmatrix      = [loc_info.x loc_info.y loc_info.z];
+out.name        = loc_info.name;
 
 %% %%%% snap gray matter electrodes to surface, get index on surface, and get point on inflated brain
-out.xyz_pial = NaN(size(elecmatrix));
-out.xyz_white = NaN(size(elecmatrix));
-out.dist_pial = NaN(size(elecmatrix,1),1);
-out.dist_white = NaN(size(elecmatrix,1),1);
-out.dist_pialwhite = NaN(size(elecmatrix,1),1);
-out.surfIndex = NaN(size(elecmatrix,1),1);
+out.xyz_pial        = NaN(size(elecmatrix));
+out.xyz_white       = NaN(size(elecmatrix));
+out.dist_pial       = NaN(size(elecmatrix,1),1);
+out.dist_white      = NaN(size(elecmatrix,1),1);
+out.dist_pialwhite  = NaN(size(elecmatrix,1),1);
+out.surfIndex       = NaN(size(elecmatrix,1),1);
 
 if isempty(distLim)
     distLim = 6;
@@ -64,12 +64,12 @@ for kk = 1:height(loc_info)
         end
 
         % find closest point on pial surface
-        dist_xyz2pial = sqrt(sum((g_pial.vertices-xyz).^2,2));
-        [minDist_pial,ind_minDist_pial] = min(dist_xyz2pial);
+        dist_xyz2pial   = sqrt(sum((g_pial.vertices-xyz).^2,2));
+        [minDist_pial,ind_minDist_pial]     = min(dist_xyz2pial);
 
         % find closest point on gray/white surface
-        dist_xyz2white = sqrt(sum((g_white.vertices-xyz).^2,2));
-        [minDist_white,ind_minDist_white] = min(dist_xyz2white);
+        dist_xyz2white  = sqrt(sum((g_white.vertices-xyz).^2,2));
+        [minDist_white,ind_minDist_white]   = min(dist_xyz2white);
 
         if minDist_pial < distLim || minDist_white  < distLim % only find points less than 6 mm away
             if minDist_pial < minDist_white  % take the index from the pial
@@ -77,11 +77,11 @@ for kk = 1:height(loc_info)
             else % take the index from the white
                 out.surfIndex(kk) = ind_minDist_white;
             end
-            out.xyz_pial(kk,:) = g_pial.vertices(out.surfIndex(kk),:);
-            out.xyz_white(kk,:) = g_white.vertices(out.surfIndex(kk),:);
-            out.dist_pial(kk) = dist_xyz2pial(out.surfIndex(kk));
-            out.dist_white(kk) = dist_xyz2white(out.surfIndex(kk));
-            out.dist_pialwhite(kk) = sqrt(sum( (g_pial.vertices(out.surfIndex(kk),:) - g_white.vertices(out.surfIndex(kk),:)).^2 ));
+            out.xyz_pial(kk,:)      = g_pial.vertices(out.surfIndex(kk),:);
+            out.xyz_white(kk,:)     = g_white.vertices(out.surfIndex(kk),:);
+            out.dist_pial(kk)       = dist_xyz2pial(out.surfIndex(kk));
+            out.dist_white(kk)      = dist_xyz2white(out.surfIndex(kk));
+            out.dist_pialwhite(kk)  = sqrt(sum( (g_pial.vertices(out.surfIndex(kk),:) - g_white.vertices(out.surfIndex(kk),:)).^2 ));
         end
 
     end

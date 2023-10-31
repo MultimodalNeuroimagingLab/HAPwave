@@ -1,6 +1,5 @@
 function [signaldata, out] = ccep_CAR64blocks_percent(signaldata,ttt,good_channels,perc_channels,car_timeint)
 % 
-% function [data_out,out] = ccep_CAR64blocks_percent(data,tt,good_channels,perc_channels,car_timeint);
 % 
 %   function applied common average referencing on CCEP data, excludes
 %   channels with high variance from 10-100 ms after stimulation onset
@@ -36,43 +35,43 @@ out = [];
 
 % create blocks to use for 64 channel groups
 set_nrs = 1:ceil(size(signaldata,1)/64);
-for ss = set_nrs
-    set_inds = (set_nrs(ss)*64-63):set_nrs(ss)*64; % 1:64 65:128 etc...
-    set_inds = set_inds(set_inds<=max(good_channels)); % make sure to stay below last good channel
+for ss          = set_nrs
+    set_inds    = (set_nrs(ss)*64-63):set_nrs(ss)*64; % 1:64 65:128 etc...
+    set_inds    = set_inds(set_inds<=max(good_channels)); % make sure to stay below last good channel
     out(ss).channels_set = set_inds;
 end
 
 % split into blocks and get car channels 
-for ss = set_nrs
+for ss      = set_nrs
     
     % total set of channels that are good & in the set:
-    these_channel_nrs = intersect(good_channels,out(ss).channels_set);
+    these_channel_nrs   = intersect(good_channels,out(ss).channels_set);
     
     % get data for car in this set
-    these_data = signaldata(these_channel_nrs,ttt>car_timeint(1) & ttt<car_timeint(2),:);
+    these_data          = signaldata(these_channel_nrs,ttt>car_timeint(1) & ttt<car_timeint(2),:);
     
     % concatinate trials (these_data will be channels X time*trials
-    these_data_cat = reshape(these_data,size(these_data,1),size(these_data,2)*size(these_data,3));
+    these_data_cat      = reshape(these_data,size(these_data,1),size(these_data,2)*size(these_data,3));
 
     % calculate variance for each channel across time
-    chan_var = var(these_data_cat,[],2); 
+    chan_var            = var(these_data_cat,[],2); 
 
     % set a threshold for which channels to reject based on variance
-    var_th = quantile(chan_var,perc_channels);
+    var_th              = quantile(chan_var,perc_channels);
        
     % include channels with smallest variance (out of good channels in set)
-    chans_incl = setdiff(1:length(these_channel_nrs),find(chan_var>var_th));
+    chans_incl          = setdiff(1:length(these_channel_nrs),find(chan_var>var_th));
     
     % original channels numbers to use for car
-    out(ss).car_channels = these_channel_nrs(chans_incl);
+    out(ss).car_channels= these_channel_nrs(chans_incl);
 end
 
 
 % now do CAR
-for ss = set_nrs % run across blocks 
+for ss                  = set_nrs % run across blocks 
     
     % average across car channels
-    out(ss).car_data = mean(signaldata(out(ss).car_channels,:,:),1);
+    out(ss).car_data    = mean(signaldata(out(ss).car_channels,:,:),1);
 
     % subtract from all other data
     signaldata(out(ss).channels_set,:,:) = signaldata(out(ss).channels_set,:,:) - repmat(out(ss).car_data,length(out(ss).channels_set),1,1);
