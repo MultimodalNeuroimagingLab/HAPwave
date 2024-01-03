@@ -212,7 +212,7 @@ end
 %% Get proportion of N1s and significant responses (using the CRPs method)
 % Plot bars with total of responses, percentage of N1s (of total responses), 
 % and percentage of significant responses based on the CRP method
-figure('Position',[0 0 300 800]), hold on
+figure('Position',[0 0 300 800],'Name','All N1s & all CRP.'), hold on
 
 for measure_ind = 1:length(area_codes)
     for stim_ind = 1:length(area_codes)
@@ -250,7 +250,7 @@ end
 % Plot bars with total of responses, percentage of significant responses
 % based on the CRP method, and percentage of N1s detected from the 
 % CRP-significant responses. 
-figure('Position',[0 0 300 800]), hold on
+figure('Position',[0 0 300 800],'Name','N1 only if resp. sign.'), hold on
 
 for measure_ind = 1:length(area_codes)
     for stim_ind = 1:length(area_codes)

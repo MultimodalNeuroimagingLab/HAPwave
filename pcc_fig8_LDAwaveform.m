@@ -68,7 +68,7 @@ for ss = 1:nr_subs
     % Correction of multiple comparisons for this subject
     pvals                                           = all_out(ss).crp_p(all_out(ss).hasdata==1);
     qq                                              = 0.05;         % false discovery rate
-    [h, crit_p, adj_ci_cvrg, adj_p]                 = fdr_bh(pvals,qq,'dep','no'); % Benjamini & Yekutieli FDR correction 
+    [h, crit_p, adj_ci_cvrg, adj_p]                 = fdr_bh(pvals,qq,'dep','no'); % Benjamini & Yekutieli FDR correction
     all_out(ss).crp_p_adj(all_out(ss).hasdata==1)   = adj_p;        % Adjusted pVals
     all_out(ss).h(all_out(ss).hasdata==1)           = h;            % adjusted pVal is significant
 end

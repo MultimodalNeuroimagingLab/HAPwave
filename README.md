@@ -18,11 +18,11 @@ In order to analyse the data, and reproduce figures from the manuscript, use the
 - Analyze the data and calculate statistics: pcc_Allstats_CRP.m
 - Make figure 2: pcc_fig2_allLimbicN1.m 
 - Make figure 3: pcc_fig3b_singleTrials.m
-- Make figure 4: pcc_fig4_sigCCEPs.m
-- Make figure 5: pcc_fig5_signatureShift.m
-- Make figure 6: pcc_fig6_temporalDelay.m
+- Make figure 4: pcc_fig4_sigCCEPs.m (to create panels B-E, change the stimulated and measured sites in lines 149-150)
+- Make figure 5: pcc_fig5_signatureShift.m (change subject in line 92)
+- Make figure 6: pcc_fig6_temporalDelay.m (change subject in line 90)
 - Make figure 7: pcc_fig7a_dMRI_renderLimbic_diadem
-		 pcc_fig7c_xCorrelation.m
+		 pcc_fig7c_xCorrelation.m (change subject in line 84)
 - Make figure 8: pcc_fig8_LDAwaveform.m
 
 

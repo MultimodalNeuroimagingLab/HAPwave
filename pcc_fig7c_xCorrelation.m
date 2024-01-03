@@ -81,7 +81,7 @@ sub_hemi        = {'r','r','r','l','r','l','l','r'};
 
 % ______________________________________________________________________ %
 % %% Set subject to test %%
-ss              = 7;
+ss              = 7; % Set subject 2 or 7, with ANT electrodes
 
 if isequal(sub_hemi{ss},'l')
     area_codes = area_codes_l;
